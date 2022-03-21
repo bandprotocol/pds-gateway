@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-8000}
+      - DEBUG=${DEBUG:-False}
+      - BANDCHAIN_REST_ENDPOINT=${BANDCHAIN_REST_ENDPOINT:-https://laozi-testnet4.bandchain.org/api}
+      - ENDPOINT_URL=${ENDPOINT_URL:-https://mainnet.infura.io/v3/<project-id>}
+      - API_KEY=${API_KEY}
+      - ALLOW_DATA_SOURCE_IDS=${ALLOW_DATA_SOURCE_IDS}
+      - REDIS=${REDIS}
+    volumes:
+      - .:/app
+  # redis:
+  #   image: 'bitnami/redis:6.2'
+  #   ports:
+  #     - "6379:6379"
+  #   environment:
+  #     - ALLOW_EMPTY_PASSWORD=yes

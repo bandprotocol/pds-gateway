@@ -1,0 +1,4 @@
+sanic==21.12.1
+sanic-redis==0.3.0
+requests==2.27.1
+httpx==0.22.0
