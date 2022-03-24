@@ -1,12 +1,5 @@
-from sanic import Sanic
 from config import config
-import os
 import httpx
-
-
-def get_bandchain_endpoint() -> str:
-    url = config["BANDCHAIN_REST_ENDPOINT"]
-    return url
 
 
 def get_bandchain_params(headers: object) -> object:
@@ -28,11 +21,10 @@ def get_endpoint_headers(headers: object) -> object:
     return params
 
 
-async def verify_requester(headers):
-    url = get_bandchain_endpoint()
+async def verify_request(headers):
     params = get_bandchain_params(headers)
 
     async with httpx.AsyncClient() as client:
-        res = await client.get(url=f"{url}/oracle/v1/verify_request", params=params)
+        res = await client.get(url=config["VERIFY_REQUEST_URL"], params=params)
 
     return res

@@ -9,8 +9,8 @@ services:
     environment:
       - HOST=${HOST:-0.0.0.0}
       - PORT=${PORT:-8080}
+      - VERIFY_REQUEST_URL=${VERIFY_REQUEST_URL:-https://laozi-testnet4.bandchain.org/api/oracle/v1/verify_request}
       - ENDPOINT_URL=${ENDPOINT_URL:-https://local.example}
-      - BANDCHAIN_REST_ENDPOINT=${BANDCHAIN_REST_ENDPOINT:-https://laozi-testnet4.bandchain.org/api}
       - ALLOW_DATA_SOURCE_IDS=${ALLOW_DATA_SOURCE_IDS:-}
       - HEADER_KEY=${HEADER_KEY}
       - HEADER_VALUE=${HEADER_VALUE}

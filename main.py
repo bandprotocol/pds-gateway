@@ -11,7 +11,7 @@ app = Sanic(__name__)
 async def verify(request):
 
     # CALL BAND_ENDPOINT TO VALIDATE REQUESTOR
-    res = await utils.verify_requester(request.headers)
+    res = await utils.verify_request(request.headers)
     body = res.json()
 
     # CHECK RESULT OF REQUEST
