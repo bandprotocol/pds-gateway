@@ -1,53 +1,63 @@
-from sanic import Sanic, response
+from sanic import Request, Sanic, response
 from sanic.log import logger
-from config import config
-import utils
+from sanic.exceptions import SanicException
+from config import Config
+from importlib import import_module
+import utils.header as header
 import httpx
 
 app = Sanic(__name__)
+app.update_config(Config)
 
 
-@app.middleware("request")
-async def verify(request):
+@app.main_process_start
+def init_app(app):
+    logger.info(f"GATEWAY_MODE: {app.config['MODE']}")
 
-    # CALL BAND_ENDPOINT TO VALIDATE REQUESTOR
-    res = await utils.verify_request(request.headers)
-    body = res.json()
 
-    # CHECK RESULT OF REQUEST
-    if res.status_code != 200:
-        return response.json(body, status=res.status_code)
+@app.main_process_start
+async def init_adapter(app):
+    # check adapter configuration
+    if app.config["ADAPTER_TYPE"] is None:
+        raise Exception("MISSING 'ADAPTER_TYPE' env")
+    if app.config["ADAPTER_NAME"] is None:
+        raise Exception("MISSING 'ADAPTER_NAME' env")
 
-    # CHECK DATA_SOURCE_ID
-    if body.get("data_source_id", None) not in config["ALLOW_DATA_SOURCE_IDS"]:
-        return response.json(
-            {
-                "error": f"wrong datasource_id, expected {config['ALLOW_DATA_SOURCE_IDS']}.",
-            },
-            status=400,
+    logger.info(f"ADAPTER: {app.config['ADAPTER_TYPE']}.{app.config['ADAPTER_NAME']}")
+
+    # initial adapter
+    module = import_module(f"adapter.{app.config['ADAPTER_TYPE']}.{app.config['ADAPTER_NAME']}".lower())
+    AdapterClass = getattr(module, "".join([part.capitalize() for part in app.config["ADAPTER_NAME"].split("_")]))
+    app.ctx.adapter = AdapterClass()
+
+
+@app.on_request
+async def verify(request: Request):
+    if app.config["MODE"] == "production":
+        # call Band's endpoint to verify requestor
+        client = httpx.AsyncClient()
+        res = await client.get(
+            url=app.config["VERIFY_REQUEST_URL"],
+            params=header.get_bandchain_params(request.headers),
         )
+        body = res.json()
 
+        # check result of request
+        if res.status_code != 200:
+            raise SanicException(body, status_code=res.status_code)
 
-@app.route("/<path:path>", methods=["GET", "POST"])
-async def request(request, path):
-
-    try:
-        async with httpx.AsyncClient() as client:
-            res = await client.request(
-                request.method,
-                f"{config['ENDPOINT_URL']}/{path}" if path else config["ENDPOINT_URL"],
-                params=request.args,
-                headers=utils.get_endpoint_headers(request.headers),
-                content=request.body,
+        # check data_source_id
+        if body.get("data_source_id", None) not in app.config["ALLOWED_DATA_SOURCE_IDS"]:
+            raise SanicException(
+                f"wrong datasource_id, expected {app.config['ALLOWED_DATA_SOURCE_IDS']}.", status_code=401
             )
 
-        return response.json(res.json(), status=res.status_code)
+
+@app.get("/<path:path>")
+async def request(request: Request, path: str):
+    try:
+        output = await app.ctx.adapter.unified_call(request)
+        return response.json(output)
 
     except Exception as e:
-        logger.warning(str(e))
-        return response.json(
-            {
-                "error": f"endpoint error.",
-            },
-            status=400,
-        )
+        raise SanicException(f"{e}", status_code=500)
