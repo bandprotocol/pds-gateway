@@ -21,7 +21,7 @@ class Adapter(ABC):
         pass
 
     async def unified_call(self, request: Request):
-        input = self.phrase_input(request)
+        input = self.phrase_input(request.args)
         output = await self.call(input)
         self.verify_output(input, output)
         return self.phrase_output(output)

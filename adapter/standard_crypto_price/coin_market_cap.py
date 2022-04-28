@@ -1,4 +1,3 @@
-from sanic.exceptions import SanicException
 from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
 from typing import Dict, TypedDict
 import httpx
@@ -10,14 +9,14 @@ class Config(TypedDict):
     API_KEY: str
 
 
-class Coinmarketcap(StandardCryptoPrice):
+class CoinMarketCap(StandardCryptoPrice):
     config: Config = None
     symbols_map: Dict[str, str] = None
 
     def __init__(self):
         self.config = Config(
-            API_URL=os.getenv("COINMARKETCAP_API_URL", None),
-            API_KEY=os.getenv("COINMARKETCAP_API_KEY", None),
+            API_URL=os.getenv("COIN_MARKET_CAP_API_URL", None),
+            API_KEY=os.getenv("COIN_MARKET_CAP_API_KEY", None),
         )
 
         self.symbols_map = {
@@ -250,7 +249,7 @@ class Coinmarketcap(StandardCryptoPrice):
         response = await client.request(
             "GET",
             self.config["API_URL"],
-            params={"slug": ",".join([self.symbols_map.get(symbol, symbol.lower()) for symbol in input["symbols"]])},
+            params={"slug": ",".join([self.symbols_map.get(symbol, symbol) for symbol in input["symbols"]])},
             headers={
                 "X-CMC_PRO_API_KEY": self.config["API_KEY"],
             },
@@ -259,10 +258,10 @@ class Coinmarketcap(StandardCryptoPrice):
         response_json = response.json()
 
         if response_json["status"]["error_code"] != 0:
-            raise SanicException(f"{response_json['status']['error_message']}", status_code=500)
+            raise Exception(f"{response_json['status']['error_message']}")
 
         result = {data["symbol"]: float(data["quote"]["USD"]["price"]) for data in response_json["data"].values()}
 
         return Output(
-            result=[result[symbol] for symbol in input["symbols"]],
+            rates=[result[symbol] for symbol in input["symbols"]],
         )

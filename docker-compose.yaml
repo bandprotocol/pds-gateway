@@ -11,15 +11,18 @@ services:
       - --reload
     environment:
       # FOR APPLICATION
-      - MODE=${MODE:-development}
+      - MODE=${MODE:-production}
       # FOR VERIFICATION
       - VERIFY_REQUEST_URL=${VERIFY_REQUEST_URL:-https://laozi-testnet4.bandchain.org/api/oracle/v1/verify_request}
       - ALLOWED_DATA_SOURCE_IDS=${ALLOWED_DATA_SOURCE_IDS:-}
       # FOR ADAPTER
       - ADAPTER_TYPE=${ADAPTER_TYPE:-}
       - ADAPTER_NAME=${ADAPTER_NAME:-}
-      ## standard_crypto_price
-      - COINMARKETCAP_API_URL=${COINMARKETCAP_API_URL:-}
-      - COINMARKETCAP_API_KEY=${COINMARKETCAP_API_KEY:-}
+      ## standard_crypto_price.coin_market_cap
+      - COIN_MARKET_CAP_API_URL=${COIN_MARKET_CAP_API_URL:-}
+      - COIN_MARKET_CAP_API_KEY=${COIN_MARKET_CAP_API_KEY:-}
+      ## standard_crypto_price.crypto_compare
+      - CRYPTO_COMPARE_API_URL=${CRYPTO_COMPARE_API_URL:-}
+      - CRYPTO_COMPARE_API_KEY=${CRYPTO_COMPARE_API_KEY:-}
     volumes:
       - .:/app
