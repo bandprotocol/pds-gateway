@@ -1,23 +1,16 @@
-from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
-from typing import Dict, TypedDict
+from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
+from typing import Dict
 import httpx
 import os
 
 
-class Config(TypedDict):
-    API_URL: str
-    API_KEY: str
-
-
 class CoinMarketCap(StandardCryptoPrice):
-    config: Config = None
+    api_url: str = "https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest"
+    api_key: str
     symbols_map: Dict[str, str] = None
 
     def __init__(self):
-        self.config = Config(
-            API_URL=os.getenv("COIN_MARKET_CAP_API_URL", None),
-            API_KEY=os.getenv("COIN_MARKET_CAP_API_KEY", None),
-        )
+        self.api_key = os.getenv("COIN_MARKET_CAP_API_KEY", None)
 
         self.symbols_map = {
             "AAVE": "aave",
@@ -248,10 +241,10 @@ class CoinMarketCap(StandardCryptoPrice):
         client = httpx.AsyncClient()
         response = await client.request(
             "GET",
-            self.config["API_URL"],
+            self.api_url,
             params={"slug": ",".join([self.symbols_map.get(symbol, symbol) for symbol in input["symbols"]])},
             headers={
-                "X-CMC_PRO_API_KEY": self.config["API_KEY"],
+                "X-CMC_PRO_API_KEY": self.api_key,
             },
         )
         response.raise_for_status()

@@ -1,3 +1,5 @@
 sanic==22.3.1
 httpx==0.22.0
 python-dotenv==0.20.0
+# # FOR TESTING
+# pytest

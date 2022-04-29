@@ -61,6 +61,7 @@ def main(symbols: List[str]) -> str:
     return get_rates(symbols)
 
 
+# python data_source_template.py BAND ALPHA
 if __name__ == "__main__":
     try:
         print(main(sys.argv[1:]))

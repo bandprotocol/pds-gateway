@@ -14,12 +14,12 @@ def get_bandchain_params(headers: Dict[str, str]) -> Dict[str, str]:
 
 
 def get_adapter(type: str, name: str):
-    module = import_module(f"adapter.{type}.{name}".lower())
+    module = import_module(f"app.adapter.{type}.{name}".lower())
     AdapterClass = getattr(module, "".join([part.capitalize() for part in name.split("_")]))
     return AdapterClass()
 
 
-async def verify_requestor(headers: Dict[str, str]) -> str:
+async def verify_request(headers: Dict[str, str]) -> str:
     client = httpx.AsyncClient()
     res = await client.get(
         url=get_app().config["VERIFY_REQUEST_URL"],

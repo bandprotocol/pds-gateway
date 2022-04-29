@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from adapter import Adapter
+from app.adapter import Adapter
 from typing import TypedDict, List
 
 
