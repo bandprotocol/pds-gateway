@@ -1,5 +1,6 @@
 from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
 from typing import Dict
+from datetime import datetime, timezone
 import httpx
 import os
 
@@ -253,8 +254,19 @@ class CoinMarketCap(StandardCryptoPrice):
         if response_json["status"]["error_code"] != 0:
             raise Exception(f"{response_json['status']['error_message']}")
 
-        result = {data["symbol"]: float(data["quote"]["USD"]["price"]) for data in response_json["data"].values()}
+        prices = [
+            {
+                "symbol": data["symbol"],
+                "price": float(data["quote"]["USD"]["price"]),
+                "timestamp": int(
+                    datetime.strptime(data["last_updated"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                    .replace(tzinfo=timezone.utc)
+                    .timestamp()
+                ),
+            }
+            for data in response_json["data"].values()
+        ]
 
         return Output(
-            rates=[result[symbol] for symbol in input["symbols"]],
+            prices=prices,
         )

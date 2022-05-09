@@ -1,5 +1,6 @@
 from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
 from typing import Dict
+from datetime import datetime
 import httpx
 import os
 
@@ -31,9 +32,16 @@ class CryptoCompare(StandardCryptoPrice):
         response.raise_for_status()
         response_json = response.json()
 
-        result = {
-            self.symbols_map_back.get(symbol, symbol): float(value["USD"]) for symbol, value in response_json.items()
-        }
+        timestamp = int(datetime.now().timestamp())
+        prices = [
+            {
+                "symbol": self.symbols_map_back.get(symbol, symbol),
+                "price": float(value["USD"]),
+                "timestamp": timestamp,
+            }
+            for symbol, value in response_json.items()
+        ]
+
         return Output(
-            rates=[result[symbol] for symbol in input["symbols"]],
+            prices=prices,
         )

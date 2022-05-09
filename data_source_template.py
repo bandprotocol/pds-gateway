@@ -37,28 +37,28 @@ def set_request_verification_headers(existing_headers: Dict[str, str]) -> Dict[s
     return new_headers
 
 
-def get_rates(symbols: List[str]) -> str:
+def get_prices(symbols: List[str]) -> str:
     """
-    Call the Gateway's URL with symbols to get the rates of symbols
+    Call the Gateway's URL with symbols to get the prices of symbols
     Args:
-        symbols: symbols that we want to get the rates
+        symbols: symbols that we want to get the prices
     Returns:
-        rates field from Gateway's response
+        prices field from Gateway's response
     """
     headers = set_request_verification_headers({})
     r = requests.get(f"{URL}", headers=headers, params={"symbols": ",".join(symbols)})
     r.raise_for_status()
     response = r.json()
-    rates = response["rates"]
+    prices = {price["symbol"]: price["price"] for price in response["prices"]}
 
-    if len(symbols) != len(rates.split(",")):
+    if len(symbols) != len(prices):
         raise Exception("INPUT_AND_OUTPUT_LENGTH_ARE_NOT_MATCH")
 
-    return rates
+    return ",".join([prices[symbol] for symbol in symbols])
 
 
 def main(symbols: List[str]) -> str:
-    return get_rates(symbols)
+    return get_prices(symbols)
 
 
 # python data_source_template.py BAND ALPHA

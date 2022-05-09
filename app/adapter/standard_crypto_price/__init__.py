@@ -3,6 +3,12 @@ from app.adapter import Adapter
 from typing import TypedDict, List
 
 
+class Price(TypedDict):
+    symbol: str
+    price: float
+    timestamp: int
+
+
 class Request(TypedDict):
     symbols: str
 
@@ -12,11 +18,11 @@ class Input(TypedDict):
 
 
 class Output(TypedDict):
-    rates: List[float]
+    prices: List[Price]
 
 
 class Response(TypedDict):
-    rates: str
+    prices: List[Price]
 
 
 class StandardCryptoPrice(Adapter):
@@ -25,11 +31,11 @@ class StandardCryptoPrice(Adapter):
         return Input(symbols=symbols)
 
     def verify_output(self, input: Input, output: Output):
-        if len(input["symbols"]) != len(output["rates"]):
+        if len(input["symbols"]) != len(output["prices"]):
             raise Exception(f"length of inputs and outputs are not the same.")
 
     def phrase_output(self, output: Output) -> Response:
-        return Response(rates=",".join([str(rate) for rate in output["rates"]]))
+        return Response(output)
 
     @abstractmethod
     async def call(self, input: Input) -> Output:

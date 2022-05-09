@@ -26,11 +26,11 @@
   - Request:
     - symbols: str (e.g. "BAND,ALPHA")
   - Response:
-    - rates: str (e.g. "99999,99999")
+    - prices: []{symbol: str, price: float, timestamp: integer} (e.g. [{symbol: “BAND”, price: 99999, timestamp: 161111111111}, {symbol: “ALPHA”, price: 99999, timestamp: 161111111111}])
   - Adapter input:
     - symbols: List[str] (e.g. ["BAND", "ALPHA"])
   - Adapter output:
-    - rates: List[str] (e.g. [99999, 99999])
+    - prices: []{symbol: str, price: float, timestamp: integer} (e.g. [{symbol: “BAND”, price: 99999, timestamp: 161111111111}, {symbol: “ALPHA”, price: 99999, timestamp: 161111111111}]
 
 ### CoinMarketCap
 
