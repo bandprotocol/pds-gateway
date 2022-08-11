@@ -1,14 +1,19 @@
-from venv import create
+import json
 from sanic import Request, Sanic, response
 from sanic.log import logger
 from sanic.exceptions import SanicException
-from config import config
+from cachetools import TTLCache
+from pytimeparse.timeparse import timeparse
+
 import app.utils.helper as helper
 
 
 def create_app(name, config):
     app = Sanic(name)
     app.update_config(config)
+
+    # init cache memory
+    cache_data = TTLCache(maxsize=app.config["CACHE_SIZE"], ttl=timeparse(app.config["TTL_TIME"]))
 
     def init_app(app):
         logger.info(f"GATEWAY_MODE: {app.config['MODE']}")
@@ -31,6 +36,10 @@ def create_app(name, config):
     @app.on_request
     async def verify(request: Request):
         try:
+            # pass verify if already cache
+            if cache_data.get(hash(json.dumps(helper.get_bandchain_params(request.headers))), None):
+                return True
+
             if app.config["MODE"] == "production":
                 data_source_id = await helper.verify_request(request.headers)
                 helper.verify_data_source_id(data_source_id)
@@ -39,8 +48,17 @@ def create_app(name, config):
 
     @app.get("/<path:path>")
     async def request(request: Request, path: str):
+        # check cache data
+        latest_data = cache_data.get(hash(json.dumps(helper.get_bandchain_params(request.headers))), None)
+        if latest_data:
+            return response.json(latest_data)
+
         try:
             output = await app.ctx.adapter.unified_call(request)
+
+            # cache data
+            cache_data[hash(json.dumps(helper.get_bandchain_params(request.headers)))] = output
+
             return response.json(output)
 
         except Exception as e:
