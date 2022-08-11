@@ -37,7 +37,7 @@ async def verify_request(headers: Dict[str, str]) -> str:
         raise Exception(body)
 
     # check node delay
-    if body.get("data_source_id", False) == True:
+    if body.get("is_delay", False) == True:
         # TODO: add logic
         pass
 
