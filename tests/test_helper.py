@@ -34,6 +34,31 @@ class TestUtilsHelper(unittest.TestCase):
             },
         )
 
+    def test_add_params_config(self):
+        params = helper.add_params_config(
+            {
+                "chain_id": "bandchain",
+                "validator": "bandcoolvalidator",
+                "external_id": "2",
+                "reporter": "bandcoolreporter",
+                "signature": "coolsignature",
+                "request_id": "1",
+            },
+        )
+
+        self.assertEqual(
+            params,
+            {
+                "chain_id": "bandchain",
+                "validator": "bandcoolvalidator",
+                "external_id": "2",
+                "reporter": "bandcoolreporter",
+                "signature": "coolsignature",
+                "request_id": "1",
+                "max_delay": helper.get_app().config["MAX_DELAY_VERIFICATION"],
+            },
+        )
+
     def test_get_adapter(self):
         path = "./app/adapter"
         standards = [f for f in listdir(path) if isdir(join(path, f)) and not f.startswith("__")]
