@@ -6,7 +6,7 @@ import unittest
 from os import listdir
 from os.path import isfile, join
 
-app = create_app("test", {"VERIFY_REQUEST_URL": "http://localhost.example"})
+app = create_app("test", {"VERIFY_REQUEST_URL": "http://localhost.example", "MAX_DELAY_VERIFICATION": "5"})
 
 
 class TestUtilsHelper(unittest.TestCase):
@@ -55,7 +55,7 @@ class TestUtilsHelper(unittest.TestCase):
                 "reporter": "bandcoolreporter",
                 "signature": "coolsignature",
                 "request_id": "1",
-                "max_delay": helper.get_app().config["MAX_DELAY_VERIFICATION"],
+                "max_delay": "5",
             },
         )
 
