@@ -3,10 +3,13 @@ from pytimeparse.timeparse import timeparse
 import pytest
 import time
 
+CACHE_CAPACITY = 3
+TTL_TIME = "1s"
+
 
 @pytest.fixture
 def cache_data():
-    return cache.Cache(3, timeparse("1s"))
+    return cache.Cache(CACHE_CAPACITY, timeparse(TTL_TIME))
 
 
 def test_normal_cache_data(cache_data):
