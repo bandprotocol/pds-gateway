@@ -31,7 +31,7 @@ def test_cache_data_out_of_capacity(cache_data):
     assert cache_data.get_data(hash("1")) == None
 
 
-def test_data_not_found(cache_data):
+def test_cache_data_not_found(cache_data):
     assert cache_data.get_data(hash("99")) == None
 
 
