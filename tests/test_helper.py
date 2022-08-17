@@ -6,7 +6,7 @@ import unittest
 from os import listdir
 from os.path import isfile, join
 
-app = create_app("test", {"VERIFY_REQUEST_URL": "http://localhost.example"})
+app = create_app("test", {"VERIFY_REQUEST_URL": "http://localhost.example", "CACHE_SIZE": 5000, "TTL_TIME": "1m"})
 
 
 class TestUtilsHelper(unittest.TestCase):

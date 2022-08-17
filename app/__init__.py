@@ -2,10 +2,9 @@ import json
 from sanic import Request, Sanic, response
 from sanic.log import logger
 from sanic.exceptions import SanicException
-from cachetools import TTLCache
 from pytimeparse.timeparse import timeparse
 
-import app.utils.helper as helper
+from app.utils import helper, cache
 
 
 def create_app(name, config):
@@ -13,7 +12,7 @@ def create_app(name, config):
     app.update_config(config)
 
     # init cache memory
-    cache_data = TTLCache(maxsize=app.config["CACHE_SIZE"], ttl=timeparse(app.config["TTL_TIME"]))
+    cache_data = cache.Cache(app.config["CACHE_SIZE"], timeparse(app.config["TTL_TIME"]))
 
     def init_app(app):
         logger.info(f"GATEWAY_MODE: {app.config['MODE']}")
@@ -37,7 +36,7 @@ def create_app(name, config):
     async def verify(request: Request):
         try:
             # pass verify if already cache
-            if cache_data.get(hash(json.dumps(helper.get_bandchain_params(request.headers))), None):
+            if cache_data.get_data(hash(json.dumps(helper.get_bandchain_params(request.headers)))):
                 return True
 
             if app.config["MODE"] == "production":
@@ -46,10 +45,10 @@ def create_app(name, config):
         except Exception as e:
             raise SanicException(f"{e}", status_code=401)
 
-    @app.get("/<path:path>")
-    async def request(request: Request, path: str):
+    @app.get("/")
+    async def request(request: Request):
         # check cache data
-        latest_data = cache_data.get(hash(json.dumps(helper.get_bandchain_params(request.headers))), None)
+        latest_data = cache_data.get_data(hash(json.dumps(helper.get_bandchain_params(request.headers))))
         if latest_data:
             return response.json(latest_data)
 
@@ -57,7 +56,7 @@ def create_app(name, config):
             output = await app.ctx.adapter.unified_call(request)
 
             # cache data
-            cache_data[hash(json.dumps(helper.get_bandchain_params(request.headers)))] = output
+            cache_data.set_data(hash(json.dumps(helper.get_bandchain_params(request.headers))), output)
 
             return response.json(output)
 
