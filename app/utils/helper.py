@@ -13,6 +13,11 @@ def get_bandchain_params(headers: Dict[str, str]) -> Dict[str, str]:
     return params
 
 
+def add_params_config(params: Dict[str, str]) -> Dict[str, str]:
+    params["max_delay"] = get_app().config["MAX_DELAY_VERIFICATION"]
+    return params
+
+
 def get_adapter(type: str, name: str):
     module = import_module(f"app.adapter.{type}.{name}".lower())
     AdapterClass = getattr(module, "".join([part.capitalize() for part in name.split("_")]))
@@ -21,15 +26,21 @@ def get_adapter(type: str, name: str):
 
 async def verify_request(headers: Dict[str, str]) -> str:
     client = httpx.AsyncClient()
+
     res = await client.get(
         url=get_app().config["VERIFY_REQUEST_URL"],
-        params=get_bandchain_params(headers),
+        params=add_params_config(get_bandchain_params(headers)),
     )
-    body = res.json()
 
     # check result of request
     if res.status_code != 200:
-        raise Exception(body)
+        raise Exception(res.text)
+
+    body = res.json()
+    # check node delay
+    if body.get("is_delay", False):
+        # TODO: add logic
+        pass
 
     return body.get("data_source_id", None)
 
