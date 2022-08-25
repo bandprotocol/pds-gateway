@@ -28,14 +28,14 @@ def create_app(name, config):
         init_app(app)
         init_adapter(app)
 
-    # @app.on_request
-    # async def verify(request: Request):
-    #     try:
-    #         if app.config["MODE"] == "production":
-    #             data_source_id = await helper.verify_request(request.headers)
-    #             helper.verify_data_source_id(data_source_id)
-    #     except Exception as e:
-    #         raise SanicException(f"{e}", status_code=401)
+    @app.on_request
+    async def verify(request: Request):
+        try:
+            if app.config["MODE"] == "production":
+                data_source_id = await helper.verify_request(request.headers)
+                helper.verify_data_source_id(data_source_id)
+        except Exception as e:
+            raise SanicException(f"{e}", status_code=401)
 
     @app.get("/<path:path>")
     async def request(request: Request, path: str):
