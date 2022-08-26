@@ -38,9 +38,9 @@ def create_app(name, config):
             if cache_data.get_data(hash(request.headers["BAND_SIGNATURE"])):
                 return
 
-            if app.config["MODE"] == "production":
-                data_source_id = await helper.verify_request(request.headers)
-                helper.verify_data_source_id(data_source_id)
+            # if app.config["MODE"] == "production":
+            #     data_source_id = await helper.verify_request(request.headers)
+            #     helper.verify_data_source_id(data_source_id)
         except Exception as e:
             raise SanicException(f"{e}", status_code=401)
 

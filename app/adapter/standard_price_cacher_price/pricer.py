@@ -1,8 +1,8 @@
-from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
+from app.adapter.standard_price_cacher_price import StandardPriceCacherPrice, Input, Output
 import httpx
 
 
-class Pricer(StandardCryptoPrice):
+class Pricer(StandardPriceCacherPrice):
     api_url: str = "https://px.bandchain.org"
 
     async def call(self, input: Input) -> Output:

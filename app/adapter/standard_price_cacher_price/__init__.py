@@ -27,6 +27,7 @@ class Response(TypedDict):
 
 class StandardPriceCacherPrice(Adapter):
     def phrase_input(self, request: Request) -> Input:
+        print(request)
         symbols = [symbol.strip() for symbol in request.get("symbols", "").split(",")]
         return Input(source=request.get("source", ""), symbols=symbols)
 
