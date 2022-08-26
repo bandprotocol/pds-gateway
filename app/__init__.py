@@ -1,4 +1,3 @@
-import json
 from sanic import Request, Sanic, response
 from sanic.log import logger
 from sanic.exceptions import SanicException
@@ -36,8 +35,8 @@ def create_app(name, config):
     async def verify(request: Request):
         try:
             # pass verify if already cache
-            if cache_data.get_data(hash(json.dumps(helper.get_bandchain_params(request.headers)))):
-                return True
+            if cache_data.get_data(hash(request.headers["BAND_SIGNATURE"])):
+                return
 
             if app.config["MODE"] == "production":
                 data_source_id = await helper.verify_request(request.headers)
@@ -48,7 +47,7 @@ def create_app(name, config):
     @app.get("/")
     async def request(request: Request):
         # check cache data
-        latest_data = cache_data.get_data(hash(json.dumps(helper.get_bandchain_params(request.headers))))
+        latest_data = cache_data.get_data(hash(request.headers["BAND_SIGNATURE"]))
         if latest_data:
             return response.json(latest_data)
 
@@ -56,7 +55,7 @@ def create_app(name, config):
             output = await app.ctx.adapter.unified_call(request)
 
             # cache data
-            cache_data.set_data(hash(json.dumps(helper.get_bandchain_params(request.headers))), output)
+            cache_data.set_data(hash(request.headers["BAND_SIGNATURE"]), output)
 
             return response.json(output)
 
