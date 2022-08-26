@@ -8,13 +8,7 @@ from pytest_httpx import HTTPXMock
 import httpx
 import pytest
 
-app = create_app(
-    "test",
-    {
-        "VERIFY_REQUEST_URL": "https://bandchain-mock.org/api/oracle/v1/verify_request",
-        "MAX_DELAY_VERIFICATION": "5",
-    },
-)
+app = create_app("test", {"VERIFY_REQUEST_URL": "http://localhost.example", "CACHE_SIZE": 5000, "TTL_TIME": "1m"})
 
 
 def test_get_bandchain_params():
