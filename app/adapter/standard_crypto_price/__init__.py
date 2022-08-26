@@ -28,12 +28,6 @@ class Response(TypedDict):
 class StandardCryptoPrice(Adapter):
     def phrase_input(self, request: Request) -> Input:
         symbols = [symbol.strip() for symbol in request.get("symbols", "").split(",")]
-
-        # source for pricer
-        source = request.get("source", "")
-        if source:
-            return Input(source=source, symbols=symbols)
-
         return Input(symbols=symbols)
 
     def verify_output(self, input: Input, output: Output):
