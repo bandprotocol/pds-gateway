@@ -13,6 +13,10 @@ def get_bandchain_params(headers: Dict[str, str]) -> Dict[str, str]:
     return params
 
 
+def get_request_hash(headers: Dict[str, str]) -> str:
+    return hash(headers["BAND_SIGNATURE"])
+
+
 def add_params_config(params: Dict[str, str]) -> Dict[str, str]:
     params["max_delay"] = get_app().config["MAX_DELAY_VERIFICATION"]
     return params

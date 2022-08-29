@@ -19,9 +19,9 @@ def create_app(name, config):
     def init_adapter(app):
         # check adapter configuration
         if app.config["ADAPTER_TYPE"] is None:
-            raise Exception("MISSING 'ADAPTER_TYPE' env")
+            raise Exception("MISSING 'ADAPTER_TYPE' ENV")
         if app.config["ADAPTER_NAME"] is None:
-            raise Exception("MISSING 'ADAPTER_NAME' env")
+            raise Exception("MISSING 'ADAPTER_NAME' ENV")
 
         logger.info(f"ADAPTER: {app.config['ADAPTER_TYPE']}.{app.config['ADAPTER_NAME']}")
         app.ctx.adapter = helper.get_adapter(app.config["ADAPTER_TYPE"], app.config["ADAPTER_NAME"])
@@ -35,7 +35,7 @@ def create_app(name, config):
     async def verify(request: Request):
         try:
             # pass verify if already cache
-            if cache_data.get_data(hash(request.headers["BAND_SIGNATURE"])):
+            if cache_data.get_data(helper.get_request_hash(request.headers)):
                 return
 
             if app.config["MODE"] == "production":
@@ -47,7 +47,7 @@ def create_app(name, config):
     @app.get("/")
     async def request(request: Request):
         # check cache data
-        latest_data = cache_data.get_data(hash(request.headers["BAND_SIGNATURE"]))
+        latest_data = cache_data.get_data(helper.get_request_hash(request.headers))
         if latest_data:
             return response.json(latest_data)
 
@@ -55,7 +55,7 @@ def create_app(name, config):
             output = await app.ctx.adapter.unified_call(request)
 
             # cache data
-            cache_data.set_data(hash(request.headers["BAND_SIGNATURE"]), output)
+            cache_data.set_data(helper.get_request_hash(request.headers), output)
 
             return response.json(output)
 

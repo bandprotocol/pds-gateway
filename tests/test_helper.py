@@ -8,7 +8,15 @@ from pytest_httpx import HTTPXMock
 import httpx
 import pytest
 
-app = create_app("test", {"VERIFY_REQUEST_URL": "http://localhost.example", "CACHE_SIZE": 5000, "TTL_TIME": "1m"})
+app = create_app(
+    "test",
+    {
+        "VERIFY_REQUEST_URL": "http://localhost.example",
+        "CACHE_SIZE": 5000,
+        "TTL_TIME": "1m",
+        "MAX_DELAY_VERIFICATION": "0",
+    },
+)
 
 
 def test_get_bandchain_params():
@@ -17,6 +25,7 @@ def test_get_bandchain_params():
             "BAND_CHAIN_ID": "bandchain",
             "BAND_VALIDATOR": "bandcoolvalidator",
             "BAND_EXTERNAL_ID": "2",
+            "BAND_DATA_SOURCE_ID": "1",
             "BAND_REPORTER": "bandcoolreporter",
             "BAND_SIGNATURE": "coolsignature",
             "BAND_REQUEST_ID": "1",
@@ -27,6 +36,7 @@ def test_get_bandchain_params():
         "chain_id": "bandchain",
         "validator": "bandcoolvalidator",
         "external_id": "2",
+        "data_source_id": "1",
         "reporter": "bandcoolreporter",
         "signature": "coolsignature",
         "request_id": "1",
@@ -34,6 +44,7 @@ def test_get_bandchain_params():
 
 
 def test_add_params_config():
+    app.update_config({"MAX_DELAY_VERIFICATION": "5"})
     params = helper.add_params_config(
         {
             "chain_id": "bandchain",

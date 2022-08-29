@@ -32,6 +32,7 @@ def set_request_verification_headers(existing_headers: Dict[str, str]) -> Dict[s
     set_header_from_env(new_headers, "BAND_VALIDATOR")
     set_header_from_env(new_headers, "BAND_REQUEST_ID")
     set_header_from_env(new_headers, "BAND_EXTERNAL_ID")
+    set_header_from_env(new_headers, "BAND_DATA_SOURCE_ID")
     set_header_from_env(new_headers, "BAND_REPORTER")
     set_header_from_env(new_headers, "BAND_SIGNATURE")
     return new_headers
