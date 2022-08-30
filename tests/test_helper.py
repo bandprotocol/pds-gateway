@@ -18,28 +18,28 @@ app = create_app(
     },
 )
 
+mock_headers = {
+    "BAND_CHAIN_ID": "bandchain",
+    "BAND_VALIDATOR": "bandcoolvalidator",
+    "BAND_REQUEST_ID": "1",
+    "BAND_EXTERNAL_ID": "1",
+    "BAND_DATA_SOURCE_ID": "1",
+    "BAND_REPORTER": "bandcoolreporter",
+    "BAND_SIGNATURE": "coolsignature",
+}
+
 
 def test_get_bandchain_params():
-    params = helper.get_bandchain_params(
-        {
-            "BAND_CHAIN_ID": "bandchain",
-            "BAND_VALIDATOR": "bandcoolvalidator",
-            "BAND_EXTERNAL_ID": "2",
-            "BAND_DATA_SOURCE_ID": "1",
-            "BAND_REPORTER": "bandcoolreporter",
-            "BAND_SIGNATURE": "coolsignature",
-            "BAND_REQUEST_ID": "1",
-        }
-    )
+    params = helper.get_bandchain_params(mock_headers)
 
     assert params == {
         "chain_id": "bandchain",
         "validator": "bandcoolvalidator",
-        "external_id": "2",
+        "request_id": "1",
+        "external_id": "1",
         "data_source_id": "1",
         "reporter": "bandcoolreporter",
         "signature": "coolsignature",
-        "request_id": "1",
     }
 
 
@@ -49,20 +49,20 @@ def test_add_params_config():
         {
             "chain_id": "bandchain",
             "validator": "bandcoolvalidator",
-            "external_id": "2",
+            "request_id": "1",
+            "external_id": "1",
             "reporter": "bandcoolreporter",
             "signature": "coolsignature",
-            "request_id": "1",
         },
     )
 
     assert params == {
         "chain_id": "bandchain",
         "validator": "bandcoolvalidator",
-        "external_id": "2",
+        "external_id": "1",
+        "request_id": "1",
         "reporter": "bandcoolreporter",
         "signature": "coolsignature",
-        "request_id": "1",
         "max_delay": "5",
     }
 
@@ -115,15 +115,6 @@ async def test_verify_request_success(httpx_mock: HTTPXMock):
 
     httpx_mock.add_callback(custom_response)
 
-    mock_headers = {
-        "BAND_CHAIN_ID": "bandchain",
-        "BAND_VALIDATOR": "bandcoolvalidator",
-        "BAND_REQUEST_ID": "1",
-        "BAND_EXTERNAL_ID": "1",
-        "BAND_DATA_SOURCE_ID": "1",
-        "BAND_REPORTER": "bandcoolreporter",
-        "BAND_SIGNATURE": "coolsignature",
-    }
     data_source_id = await helper.verify_request(mock_headers)
     assert data_source_id == "226"
 
@@ -138,16 +129,6 @@ async def test_verify_request_failed(httpx_mock: HTTPXMock):
         )
 
     httpx_mock.add_callback(custom_response)
-
-    mock_headers = {
-        "BAND_CHAIN_ID": "bandchain",
-        "BAND_VALIDATOR": "bandcoolvalidator",
-        "BAND_REQUEST_ID": "1",
-        "BAND_EXTERNAL_ID": "1",
-        "BAND_DATA_SOURCE_ID": "1",
-        "BAND_REPORTER": "bandcoolreporter",
-        "BAND_SIGNATURE": "coolsignature",
-    }
 
     try:
         await helper.verify_request(mock_headers)
