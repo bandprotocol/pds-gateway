@@ -1,34 +1,28 @@
 from abc import abstractmethod
-from dataclasses import dataclass
 from app.adapter import Adapter
 from typing import TypedDict, List
 
 
-@dataclass
 class Price(TypedDict):
     symbol: str
     price: float
     timestamp: int
 
 
-@dataclass
 class Request(TypedDict):
     source: str
     symbols: str
 
 
-@dataclass
 class Input(TypedDict):
     source: str
     symbols: List[str]
 
 
-@dataclass
 class Output(TypedDict):
     prices: List[Price]
 
 
-@dataclass
 class Response(TypedDict):
     prices: List[Price]
 
