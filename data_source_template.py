@@ -28,13 +28,19 @@ def set_request_verification_headers(existing_headers: Dict[str, str]) -> Dict[s
         request header
     """
     new_headers = existing_headers.copy()
-    set_header_from_env(new_headers, "BAND_CHAIN_ID")
-    set_header_from_env(new_headers, "BAND_VALIDATOR")
-    set_header_from_env(new_headers, "BAND_REQUEST_ID")
-    set_header_from_env(new_headers, "BAND_EXTERNAL_ID")
-    set_header_from_env(new_headers, "BAND_DATA_SOURCE_ID")
-    set_header_from_env(new_headers, "BAND_REPORTER")
-    set_header_from_env(new_headers, "BAND_SIGNATURE")
+
+    band_keys = [
+        "BAND_CHAIN_ID",
+        "BAND_VALIDATOR",
+        "BAND_REQUEST_ID",
+        "BAND_EXTERNAL_ID",
+        "BAND_DATA_SOURCE_ID",
+        "BAND_REPORTER",
+        "BAND_SIGNATURE",
+    ]
+    for band_key in band_keys:
+        set_header_from_env(new_headers, band_key)
+
     return new_headers
 
 
