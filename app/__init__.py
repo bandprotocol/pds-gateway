@@ -11,20 +11,20 @@ def create_app(name, config):
     app.update_config(config)
 
     # init cache memory
-    cache_data = cache.Cache(app.config["CACHE_SIZE"], timeparse(app.config["TTL_TIME"]))
+    cache_data = cache.Cache(app.config.CACHE_SIZE, timeparse(app.config.TTL_TIME))
 
     def init_app(app):
-        logger.info(f"GATEWAY_MODE: {app.config['MODE']}")
+        logger.info(f"GATEWAY_MODE: {app.config.MODE}")
 
     def init_adapter(app):
         # check adapter configuration
-        if app.config["ADAPTER_TYPE"] is None:
+        if app.config.ADAPTER_TYPE is None:
             raise Exception("MISSING 'ADAPTER_TYPE' ENV")
-        if app.config["ADAPTER_NAME"] is None:
+        if app.config.ADAPTER_NAME is None:
             raise Exception("MISSING 'ADAPTER_NAME' ENV")
 
-        logger.info(f"ADAPTER: {app.config['ADAPTER_TYPE']}.{app.config['ADAPTER_NAME']}")
-        app.ctx.adapter = helper.get_adapter(app.config["ADAPTER_TYPE"], app.config["ADAPTER_NAME"])
+        logger.info(f"ADAPTER: {app.config.ADAPTER_TYPE}.{app.config.ADAPTER_NAME}")
+        app.ctx.adapter = helper.get_adapter(app.config.ADAPTER_TYPE, app.config.ADAPTER_NAME)
 
     @app.main_process_start
     def init(app):
@@ -38,7 +38,7 @@ def create_app(name, config):
             if cache_data.get_data(helper.get_request_hash(request.headers)):
                 return
 
-            if app.config["MODE"] == "production":
+            if app.config.MODE == "production":
                 data_source_id = await helper.verify_request(request.headers)
                 helper.verify_data_source_id(data_source_id)
         except Exception as e:

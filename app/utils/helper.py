@@ -18,7 +18,7 @@ def get_request_hash(headers: Dict[str, str]) -> str:
 
 
 def add_params_config(params: Dict[str, str]) -> Dict[str, str]:
-    params["max_delay"] = get_app().config["MAX_DELAY_VERIFICATION"]
+    params["max_delay"] = get_app().config.MAX_DELAY_VERIFICATION
     return params
 
 
@@ -32,7 +32,7 @@ async def verify_request(headers: Dict[str, str]) -> str:
     client = httpx.AsyncClient()
 
     res = await client.get(
-        url=get_app().config["VERIFY_REQUEST_URL"],
+        url=get_app().config.VERIFY_REQUEST_URL,
         params=add_params_config(get_bandchain_params(headers)),
     )
 
@@ -50,8 +50,8 @@ async def verify_request(headers: Dict[str, str]) -> str:
 
 
 def verify_data_source_id(data_source_id: str) -> bool:
-    if data_source_id not in get_app().config["ALLOWED_DATA_SOURCE_IDS"]:
+    if data_source_id not in get_app().config.ALLOWED_DATA_SOURCE_IDS:
         raise Exception(
-            f"wrong datasource_id. expected {get_app().config['ALLOWED_DATA_SOURCE_IDS']}, got {data_source_id}."
+            f"wrong datasource_id. expected {get_app().config.ALLOWED_DATA_SOURCE_IDS}, got {data_source_id}."
         )
     return True
