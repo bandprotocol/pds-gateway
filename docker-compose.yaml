@@ -1,18 +1,27 @@
-version: "3.9"
+version: '3.9'
 services:
   gateway:
     build:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      - "8080:8080"
+      - '8000:8000'
+    command:
+      - --dev
+      - --reload
     environment:
-      - HOST=${HOST:-0.0.0.0}
-      - PORT=${PORT:-8080}
-      - VERIFY_REQUEST_URL=${VERIFY_REQUEST_URL:-https://laozi-testnet4.bandchain.org/api/oracle/v1/verify_request}
-      - ENDPOINT_URL=${ENDPOINT_URL:-https://local.example}
-      - ALLOW_DATA_SOURCE_IDS=${ALLOW_DATA_SOURCE_IDS:-}
-      - HEADER_KEY=${HEADER_KEY}
-      - HEADER_VALUE=${HEADER_VALUE}
+      # FOR APPLICATION
+      - MODE=${MODE:-production}
+      # FOR VERIFICATION
+      - VERIFY_REQUEST_URL=${VERIFY_REQUEST_URL:-https://laozi-testnet5.bandchain.org/api/oracle/v1/verify_request}
+      - ALLOWED_DATA_SOURCE_IDS=${ALLOWED_DATA_SOURCE_IDS:-}
+      - CACHE_SIZE==${CACHE_SIZE:-1000}
+      # FOR ADAPTER
+      - ADAPTER_TYPE=${ADAPTER_TYPE:-}
+      - ADAPTER_NAME=${ADAPTER_NAME:-}
+      ## standard_crypto_price.coin_market_cap
+      - COIN_MARKET_CAP_API_KEY=${COIN_MARKET_CAP_API_KEY:-}
+      ## standard_crypto_price.crypto_compare
+      - CRYPTO_COMPARE_API_KEY=${CRYPTO_COMPARE_API_KEY:-}
     volumes:
       - .:/app
