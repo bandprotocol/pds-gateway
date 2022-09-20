@@ -34,28 +34,31 @@ def create_app(name, config):
     @app.on_request
     async def verify(request: Request):
         try:
-            # pass verify if already cache
-            if cache_data.get_data(helper.get_request_hash(request.headers)):
-                return
-
             if app.config.MODE == "production":
+                # pass verify if already cache
+                if cache_data.get_data(helper.get_request_hash(request.headers)):
+                    return
+
                 data_source_id = await helper.verify_request(request.headers)
                 helper.verify_data_source_id(data_source_id)
+
         except Exception as e:
             raise SanicException(f"{e}", status_code=401)
 
     @app.get("/")
     async def request(request: Request):
-        # check cache data
-        latest_data = cache_data.get_data(helper.get_request_hash(request.headers))
-        if latest_data:
-            return response.json(latest_data)
+        if app.config.MODE == "production":
+            # check cache data
+            latest_data = cache_data.get_data(helper.get_request_hash(request.headers))
+            if latest_data:
+                return response.json(latest_data)
 
         try:
             output = await app.ctx.adapter.unified_call(request)
 
-            # cache data
-            cache_data.set_data(helper.get_request_hash(request.headers), output)
+            if app.config.MODE == "production":
+                # cache data
+                cache_data.set_data(helper.get_request_hash(request.headers), output)
 
             return response.json(output)
 
