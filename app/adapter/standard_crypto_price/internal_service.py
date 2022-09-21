@@ -22,14 +22,13 @@ class InternalService(StandardCryptoPrice):
         response.raise_for_status()
         response_json = response.json()
 
-        timestamp = int(datetime.now().timestamp())
         prices = [
             {
                 "symbol": item["symbol"],
                 "price": float(item["price"]),
-                "timestamp": timestamp,
+                "timestamp": int(item["timestamp"]),
             }
-            for item in response_json["data"].items()
+            for item in response_json["data"]
         ]
 
         return Output(
