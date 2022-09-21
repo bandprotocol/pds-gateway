@@ -28,7 +28,7 @@ class InternalService(StandardCryptoPrice):
                 "price": float(item["price"]),
                 "timestamp": int(item["timestamp"]),
             }
-            for item in response_json["data"]
+            for item in response_json["prices"]
         ]
 
         return Output(
