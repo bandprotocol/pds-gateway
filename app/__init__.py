@@ -36,7 +36,7 @@ def create_app(name, config):
         try:
             if app.config.MODE == "production":
                 # pass verify if already cache
-                if cache_data.get_data(helper.get_request_hash(request.headers)):
+                if cache_data.get_data(helper.get_band_signature_hash(request.headers)):
                     return
 
                 data_source_id = await helper.verify_request(request.headers)
@@ -49,7 +49,7 @@ def create_app(name, config):
     async def request(request: Request):
         if app.config.MODE == "production":
             # check cache data
-            latest_data = cache_data.get_data(helper.get_request_hash(request.headers))
+            latest_data = cache_data.get_data(helper.get_band_signature_hash(request.headers))
             if latest_data:
                 return response.json(latest_data)
 
@@ -58,7 +58,7 @@ def create_app(name, config):
 
             if app.config.MODE == "production":
                 # cache data
-                cache_data.set_data(helper.get_request_hash(request.headers), output)
+                cache_data.set_data(helper.get_band_signature_hash(request.headers), output)
 
             return response.json(output)
 

@@ -13,7 +13,7 @@ def get_bandchain_params(headers: Dict[str, str]) -> Dict[str, str]:
     return params
 
 
-def get_request_hash(headers: Dict[str, str]) -> str:
+def get_band_signature_hash(headers: Dict[str, str]) -> str:
     return hash(headers["BAND_SIGNATURE"])
 
 
