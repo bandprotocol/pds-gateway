@@ -1,9 +1,12 @@
+from distutils.log import debug
+import imp
 from sanic import Request, Sanic, response
 from sanic.log import logger
 from sanic.exceptions import SanicException
 from pytimeparse.timeparse import timeparse
 
 from app.utils import helper, cache
+from app.report import collect_verify_data, collect_request_data
 
 
 def create_app(name, config):
@@ -32,6 +35,7 @@ def create_app(name, config):
         init_adapter(app)
 
     @app.on_request
+    @collect_verify_data
     async def verify(request: Request):
         try:
             if app.config.MODE == "production":
@@ -42,11 +46,15 @@ def create_app(name, config):
                 data_source_id = await helper.verify_request(request.headers)
                 helper.verify_data_source_id(data_source_id)
 
+            # raise Exception("Sorry can't verify")
+
         except Exception as e:
             raise SanicException(f"{e}", status_code=401)
 
     @app.get("/")
+    @collect_request_data()
     async def request(request: Request):
+
         if app.config.MODE == "production":
             # check cache data
             latest_data = cache_data.get_data(helper.get_band_signature_hash(request.headers))
@@ -60,9 +68,13 @@ def create_app(name, config):
                 # cache data
                 cache_data.set_data(helper.get_band_signature_hash(request.headers), output)
 
+            raise Exception("fakkkk")
+
             return response.json(output)
 
         except Exception as e:
+            print("WoWWWWWWWW")
+            ## todo get res status
             raise SanicException(f"{e}", status_code=500)
 
     return app
