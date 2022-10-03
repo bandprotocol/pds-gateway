@@ -1,20 +1,24 @@
-from app.adapter.standard_price_cacher_price import StandardPriceCacherPrice, Input, Output
+from datetime import datetime
+from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
 import httpx
+import os
 
 
-class Pricer(StandardPriceCacherPrice):
-    api_url: str = "https://px.bandchain.org"
+class InternalService(StandardCryptoPrice):
+    # URL that allow traffic from gateway only
+    api_url: str = None
+
+    def __init__(self):
+        self.api_url = os.getenv("API_URL", None)
 
     async def call(self, input: Input) -> Output:
         client = httpx.AsyncClient()
         response = await client.request(
             "GET",
             self.api_url,
-            params={
-                "source": input["source"],
-                "symbols": ",".join(input["symbols"]),
-            },
+            params={"symbols": ",".join(input["symbols"])},
         )
+
         response.raise_for_status()
         response_json = response.json()
 
@@ -22,7 +26,7 @@ class Pricer(StandardPriceCacherPrice):
             {
                 "symbol": item["symbol"],
                 "price": float(item["price"]),
-                "timestamp": item["timestamp"],
+                "timestamp": int(item["timestamp"]),
             }
             for item in response_json["prices"]
         ]
