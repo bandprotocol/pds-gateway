@@ -1,8 +1,7 @@
-from distutils.log import debug
-import imp
 from sanic import Request, Sanic, response
 from sanic.log import logger
 from sanic.exceptions import SanicException
+from httpx import HTTPStatusError
 from pytimeparse.timeparse import timeparse
 
 from app.utils import helper, cache
@@ -72,6 +71,8 @@ def create_app(name, config):
 
             return response.json(output)
 
+        except HTTPStatusError as e:
+            raise SanicException(f"{e}", status_code=e.response.status_code)
         except Exception as e:
             print("WoWWWWWWWW")
             ## todo get res status
