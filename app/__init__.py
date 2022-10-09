@@ -4,18 +4,25 @@ from sanic.exceptions import SanicException
 from httpx import HTTPStatusError
 from pytimeparse.timeparse import timeparse
 
+
 from app.utils import helper, cache
 from app.report import collect_verify_data, collect_request_data
+from app.report.db import DB
 
 
 def create_app(name, config):
     app = Sanic(name)
     app.update_config(config)
 
+    # only for save report on DB
+    app.ctx.db = None
+    if config.MONGO_DB_URL:
+        app.ctx.db = DB(config.MONGO_DB_URL)
+
     # init cache memory
     cache_data = cache.Cache(app.config.CACHE_SIZE, timeparse(app.config.TTL_TIME))
 
-    def init_app(app):
+    async def init_app(app):
         logger.info(f"GATEWAY_MODE: {app.config.MODE}")
 
     def init_adapter(app):
@@ -34,7 +41,7 @@ def create_app(name, config):
         init_adapter(app)
 
     @app.on_request
-    @collect_verify_data
+    @collect_verify_data(app.ctx.db)
     async def verify(request: Request):
         try:
             if app.config.MODE == "production":
@@ -51,13 +58,13 @@ def create_app(name, config):
             raise SanicException(f"{e}", status_code=401)
 
     @app.get("/")
-    @collect_request_data()
+    @collect_request_data(app.ctx.db)
     async def request(request: Request):
-
         if app.config.MODE == "production":
             # check cache data
             latest_data = cache_data.get_data(helper.get_band_signature_hash(request.headers))
             if latest_data:
+                latest_data["cached_data"] = True
                 return response.json(latest_data)
 
         try:
@@ -67,7 +74,7 @@ def create_app(name, config):
                 # cache data
                 cache_data.set_data(helper.get_band_signature_hash(request.headers), output)
 
-            raise Exception("fakkkk")
+            # raise Exception("fakkkk")
 
             return response.json(output)
 
