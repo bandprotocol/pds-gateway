@@ -6,7 +6,7 @@ from pytimeparse.timeparse import timeparse
 
 
 from app.utils import helper, cache
-from app.report import collect_verify_data, collect_request_data
+from app.report import CollectVerifyData, CollectRequestData
 from app.report.db import DB
 
 
@@ -41,7 +41,7 @@ def create_app(name, config):
         init_adapter(app)
 
     @app.on_request
-    @collect_verify_data(app.ctx.db)
+    @CollectVerifyData(db=app.ctx.db)
     async def verify(request: Request):
         try:
             if app.config.MODE == "production":
@@ -52,13 +52,13 @@ def create_app(name, config):
                 data_source_id = await helper.verify_request(request.headers)
                 helper.verify_data_source_id(data_source_id)
 
-            # raise Exception("Sorry can't verify")
+            raise Exception("Sorry can't verify")
 
         except Exception as e:
             raise SanicException(f"{e}", status_code=401)
 
     @app.get("/")
-    @collect_request_data(app.ctx.db)
+    @CollectRequestData(db=app.ctx.db)
     async def request(request: Request):
         if app.config.MODE == "production":
             # check cache data
@@ -81,7 +81,6 @@ def create_app(name, config):
         except HTTPStatusError as e:
             raise SanicException(f"{e}", status_code=e.response.status_code)
         except Exception as e:
-            print("WoWWWWWWWW")
             ## todo get res status
             raise SanicException(f"{e}", status_code=500)
 
