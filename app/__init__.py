@@ -52,8 +52,6 @@ def create_app(name, config):
                 data_source_id = await helper.verify_request(request.headers)
                 helper.verify_data_source_id(data_source_id)
 
-            raise Exception("Sorry can't verify")
-
         except Exception as e:
             raise SanicException(f"{e}", status_code=401)
 
@@ -73,8 +71,6 @@ def create_app(name, config):
             if app.config.MODE == "production":
                 # cache data
                 cache_data.set_data(helper.get_band_signature_hash(request.headers), output)
-
-            # raise Exception("fakkkk")
 
             return response.json(output)
 
