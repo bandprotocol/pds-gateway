@@ -22,7 +22,7 @@ def create_app(name, config):
     # init cache memory
     cache_data = cache.Cache(app.config.CACHE_SIZE, timeparse(app.config.TTL_TIME))
 
-    async def init_app(app):
+    def init_app(app):
         logger.info(f"GATEWAY_MODE: {app.config.MODE}")
 
     def init_adapter(app):
@@ -77,7 +77,6 @@ def create_app(name, config):
         except HTTPStatusError as e:
             raise SanicException(f"{e}", status_code=e.response.status_code)
         except Exception as e:
-            ## todo get res status
             raise SanicException(f"{e}", status_code=500)
 
     return app
