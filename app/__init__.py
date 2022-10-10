@@ -17,7 +17,7 @@ def create_app(name, config):
     # only for save report on DB
     app.ctx.db = None
     if config.MONGO_DB_URL:
-        app.ctx.db = DB(config.MONGO_DB_URL)
+        app.ctx.db = DB(config.MONGO_DB_URL, "pds-test")
 
     # init cache memory
     cache_data = cache.Cache(app.config.CACHE_SIZE, timeparse(app.config.TTL_TIME))

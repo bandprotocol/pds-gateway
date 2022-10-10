@@ -2,8 +2,9 @@ import functools
 from sanic.exceptions import SanicException
 from sanic.request import Request
 
-from app.utils.helper import get_bandchain_params
-from app.report.db import DB, VerifyErrorType
+from app.utils.helper import get_bandchain_params_with_type
+from app.report.db import DB, VerifyErrorType, Report
+from app.report.helper import bytes_to_json
 
 
 class CollectVerifyData:
@@ -21,25 +22,26 @@ class CollectVerifyData:
                 request = [arg for arg in args if isinstance(arg, Request)][0]
 
                 client_ip = request.ip
-                bandchain_params = get_bandchain_params(request.headers)
+                bandchain_params = get_bandchain_params_with_type(request.headers)
 
                 if self.db:
-                    verify_error_type = VerifyErrorType.ERROR_VERIFICATION.value
+                    verify_error_type = VerifyErrorType.ERROR_VERIFICATION
                     if e.message[0:19] == "wrong datasource_id":
-                        verify_error_type = VerifyErrorType.UNSUPPORTED_DS_ID.value
+                        verify_error_type = VerifyErrorType.UNSUPPORTED_DS_ID
 
-                    doc = {
-                        "user_ip": client_ip,
-                        "reporter_address": bandchain_params.get("reporter", None),
-                        "validator_address": bandchain_params.get("validator", None),
-                        "request_id": bandchain_params.get("request_id", None),
-                        "external_id": bandchain_params.get("external_id", None),
-                        "from_ds_id": bandchain_params.get("data_source_id", None),
-                        "verify_error_type": verify_error_type,
-                        "verify_response_code": e.status_code,
-                        "verify_error_msg": e.message,
-                    }
-                    await self.db.client["pds-test"]["report"].insert_one(doc)
+                    await self.db.save_report(
+                        Report(
+                            user_ip=client_ip,
+                            reporter_address=bandchain_params.get("reporter", None),
+                            validator_address=bandchain_params.get("validator", None),
+                            request_id=bandchain_params.get("request_id", None),
+                            from_ds_id=bandchain_params.get("from_ds_id", None),
+                            external_id=bandchain_params.get("external_id", None),
+                            verify_error_type=verify_error_type,
+                            verify_response_code=int(e.status_code),
+                            verify_error_msg=e.message,
+                        )
+                    )
 
                 raise e
 
@@ -55,36 +57,41 @@ class CollectRequestData:
             try:
                 request = [arg for arg in args if isinstance(arg, Request)][0]
                 client_ip = request.ip
-                bandchain_params = get_bandchain_params(request.headers)
+                bandchain_params = get_bandchain_params_with_type(request.headers)
 
                 res = await func(*args, **kwargs)
 
                 if self.db:
-                    doc = {
-                        "user_ip": client_ip,
-                        "reporter_address": bandchain_params.get("reporter", None),
-                        "validator_address": bandchain_params.get("validator", None),
-                        "request_id": bandchain_params.get("request_id", None),
-                        "external_id": bandchain_params.get("external_id", None),
-                        "from_ds_id": bandchain_params.get("data_source_id", None),
-                        "provider_response_code": res.status,
-                    }
-                    await self.db.client["pds-test"]["report"].insert_one(doc)
+                    res_json = bytes_to_json(res.body)
+                    await self.db.save_report(
+                        Report(
+                            user_ip=client_ip,
+                            reporter_address=bandchain_params.get("reporter", None),
+                            validator_address=bandchain_params.get("validator", None),
+                            request_id=bandchain_params.get("request_id", None),
+                            from_ds_id=bandchain_params.get("from_ds_id", None),
+                            external_id=bandchain_params.get("external_id", None),
+                            cached_data=res_json.get("cached_data", False),
+                            provider_response_code=res.status,
+                        )
+                    )
 
                 return res
 
             except SanicException as e:
                 if self.db:
-                    doc = {
-                        "user_ip": client_ip,
-                        "reporter_address": bandchain_params.get("reporter", None),
-                        "validator_address": bandchain_params.get("validator", None),
-                        "request_id": bandchain_params.get("request_id", None),
-                        "external_id": bandchain_params.get("external_id", None),
-                        "from_ds_id": bandchain_params.get("data_source_id", None),
-                        "provider_response_code": res.status,
-                        "provider_error_msg": e.message,
-                    }
+                    await self.db.save_report(
+                        Report(
+                            user_ip=client_ip,
+                            reporter_address=bandchain_params.get("reporter", None),
+                            validator_address=bandchain_params.get("validator", None),
+                            request_id=bandchain_params.get("request_id", None),
+                            from_ds_id=bandchain_params.get("from_ds_id", None),
+                            external_id=bandchain_params.get("external_id", None),
+                            provider_response_code=res.status,
+                            provider_error_msg=e.message,
+                        )
+                    )
 
                 raise e
 

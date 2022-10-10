@@ -13,6 +13,20 @@ def get_bandchain_params(headers: Dict[str, str]) -> Dict[str, str]:
     return params
 
 
+def get_bandchain_params_with_type(headers: Dict[str, str]) -> Dict[str, str]:
+    params = {}
+    params_type_int = ["request_id", "from_ds_id", "external_id"]
+    for k, v in headers.items():
+        if k.lower().startswith("band_"):
+            band_arg = k.lower()[5:]
+            if band_arg in params_type_int:
+                params[band_arg] = int(v)
+            else:
+                params[band_arg] = v
+
+    return params
+
+
 def get_band_signature_hash(headers: Dict[str, str]) -> str:
     return hash(headers["BAND_SIGNATURE"])
 
