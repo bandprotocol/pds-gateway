@@ -49,8 +49,8 @@ def create_app(name, config):
                 if cache_data.get_data(helper.get_band_signature_hash(request.headers)):
                     return
 
-                # data_source_id = await helper.verify_request(request.headers)
-                # helper.verify_data_source_id(data_source_id)
+                data_source_id = await helper.verify_request(request.headers)
+                helper.verify_data_source_id(data_source_id)
 
         except Exception as e:
             raise SanicException(f"{e}", status_code=401)
