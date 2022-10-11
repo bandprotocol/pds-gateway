@@ -16,8 +16,8 @@ def create_app(name, config):
 
     # only for save report on DB
     app.ctx.db = None
-    if config.MONGO_DB_URL:
-        app.ctx.db = DB(config.MONGO_DB_URL, "pds-test")
+    if config.MONGO_DB_URL and config.COLLECTION_DB_NAME:
+        app.ctx.db = DB(config.MONGO_DB_URL, config.COLLECTION_DB_NAME)
 
     # init cache memory
     cache_data = cache.Cache(app.config.CACHE_SIZE, timeparse(app.config.TTL_TIME))
@@ -49,8 +49,8 @@ def create_app(name, config):
                 if cache_data.get_data(helper.get_band_signature_hash(request.headers)):
                     return
 
-                data_source_id = await helper.verify_request(request.headers)
-                helper.verify_data_source_id(data_source_id)
+                # data_source_id = await helper.verify_request(request.headers)
+                # helper.verify_data_source_id(data_source_id)
 
         except Exception as e:
             raise SanicException(f"{e}", status_code=401)

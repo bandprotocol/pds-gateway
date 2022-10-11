@@ -17,3 +17,4 @@ class Config:
     ADAPTER_NAME = os.environ.get("ADAPTER_NAME", None)
 
     MONGO_DB_URL = os.environ.get("MONGO_DB_URL", None)
+    COLLECTION_DB_NAME = os.environ.get("COLLECTION_DB_NAME", None)
