@@ -1,3 +1,4 @@
+from aifc import Error
 from sanic import Request, Sanic, response
 from sanic.log import logger
 from sanic.exceptions import SanicException
@@ -7,7 +8,7 @@ from pytimeparse.timeparse import timeparse
 
 from app.utils import helper, cache
 from app.report import CollectVerifyData, CollectRequestData
-from app.report.db import DB
+from app.report.db import DB, Verify
 
 
 def create_app(name, config):
@@ -18,12 +19,18 @@ def create_app(name, config):
     app.ctx.db = None
     if config.MONGO_DB_URL and config.COLLECTION_DB_NAME:
         app.ctx.db = DB(config.MONGO_DB_URL, config.COLLECTION_DB_NAME)
+        logger.info(f"DB : save report data on mongo db")
 
     # init cache memory
     cache_data = cache.Cache(app.config.CACHE_SIZE, timeparse(app.config.TTL_TIME))
 
     def init_app(app):
         logger.info(f"GATEWAY_MODE: {app.config.MODE}")
+
+        if app.ctx.db == None:
+            logger.info(
+                f"DB : No DB -> if you want to save data on db please add [MONGO_DB_URL, COLLECTION_DB_NAME] in env"
+            )
 
     def init_adapter(app):
         # check adapter configuration
@@ -49,8 +56,11 @@ def create_app(name, config):
                 if cache_data.get_data(helper.get_band_signature_hash(request.headers)):
                     return
 
-                data_source_id = await helper.verify_request(request.headers)
-                helper.verify_data_source_id(data_source_id)
+                verify = await helper.verify_request(request.headers)
+                helper.verify_data_source_id(verify["data_source_id"])
+                request.ctx.verify = Verify(response_code=200, is_delay=verify["is_delay"])
+            else:
+                request.ctx.verify = Verify()
 
         except Exception as e:
             raise SanicException(f"{e}", status_code=401)
@@ -59,7 +69,7 @@ def create_app(name, config):
     @CollectRequestData(db=app.ctx.db)
     async def request(request: Request):
         if app.config.MODE == "production":
-            # check cache data
+            # get cache data
             latest_data = cache_data.get_data(helper.get_band_signature_hash(request.headers))
             if latest_data:
                 latest_data["cached_data"] = True

@@ -3,7 +3,7 @@ from sanic.exceptions import SanicException
 from sanic.request import Request
 
 from app.utils.helper import get_bandchain_params_with_type
-from app.report.db import DB, VerifyErrorType, Report
+from app.report.db import DB, Report, VerifyErrorType, Verify, ProviderResponse
 from app.report.helper import bytes_to_json
 
 
@@ -25,9 +25,9 @@ class CollectVerifyData:
                 bandchain_params = get_bandchain_params_with_type(request.headers)
 
                 if self.db:
-                    verify_error_type = VerifyErrorType.ERROR_VERIFICATION
+                    verify_error = VerifyErrorType.ERROR_VERIFICATION
                     if e.message[0:19] == "wrong datasource_id":
-                        verify_error_type = VerifyErrorType.UNSUPPORTED_DS_ID
+                        verify_error = VerifyErrorType.UNSUPPORTED_DS_ID
 
                     await self.db.save_report(
                         Report(
@@ -37,9 +37,11 @@ class CollectVerifyData:
                             request_id=bandchain_params.get("request_id", None),
                             from_ds_id=bandchain_params.get("from_ds_id", None),
                             external_id=bandchain_params.get("external_id", None),
-                            verify_error_type=verify_error_type,
-                            verify_response_code=int(e.status_code),
-                            verify_error_msg=e.message,
+                            verify=Verify(
+                                response_code=int(e.status_code),
+                                error_type=verify_error.value,
+                                error_msg=e.args[0],
+                            ).dict(),
                         )
                     )
 
@@ -72,7 +74,8 @@ class CollectRequestData:
                             from_ds_id=bandchain_params.get("from_ds_id", None),
                             external_id=bandchain_params.get("external_id", None),
                             cached_data=res_json.get("cached_data", False),
-                            provider_response_code=res.status,
+                            verify=request.ctx.verify.dict(),
+                            provider_response=ProviderResponse(response_code=res.status).dict(),
                         )
                     )
 
@@ -88,8 +91,11 @@ class CollectRequestData:
                             request_id=bandchain_params.get("request_id", None),
                             from_ds_id=bandchain_params.get("from_ds_id", None),
                             external_id=bandchain_params.get("external_id", None),
-                            provider_response_code=res.status,
-                            provider_error_msg=e.message,
+                            verify=request.ctx.verify.dict(),
+                            provider_response=ProviderResponse(
+                                response_code=e.status_code,
+                                error_msg=e.args[0],
+                            ).dict(),
                         )
                     )
 

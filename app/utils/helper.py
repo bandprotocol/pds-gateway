@@ -27,7 +27,7 @@ def get_bandchain_params_with_type(headers: Dict[str, str]) -> Dict[str, str]:
     return params
 
 
-def get_band_signature_hash(headers: Dict[str, str]) -> str:
+def get_request_hash(headers: Dict[str, str]) -> str:
     return hash(headers["BAND_SIGNATURE"])
 
 
@@ -42,7 +42,7 @@ def get_adapter(type: str, name: str):
     return AdapterClass()
 
 
-async def verify_request(headers: Dict[str, str]) -> str:
+async def verify_request(headers: Dict[str, str]) -> dict:
     client = httpx.AsyncClient()
 
     res = await client.get(
@@ -60,7 +60,7 @@ async def verify_request(headers: Dict[str, str]) -> str:
         # TODO: add logic
         pass
 
-    return body.get("data_source_id", None)
+    return {"is_delay": body.get("is_delay", False), "data_source_id": body.get("data_source_id", None)}
 
 
 def verify_data_source_id(data_source_id: str) -> bool:
