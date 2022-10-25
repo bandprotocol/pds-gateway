@@ -1,8 +1,8 @@
-from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
+from app.adapter.standard_price import StandardPrice, Input, Output
 import os
 
 
-class Template(StandardCryptoPrice):
+class Template(StandardPrice):
     api_url: str
     api_key: str
 

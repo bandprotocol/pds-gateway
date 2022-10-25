@@ -25,7 +25,7 @@ class Response(TypedDict):
     prices: List[Price]
 
 
-class StandardCryptoPrice(Adapter):
+class StandardPrice(Adapter):
     def phrase_input(self, request: Request) -> Input:
         symbols = [symbol.strip() for symbol in request.get("symbols", "").split(",")]
         return Input(symbols=symbols)

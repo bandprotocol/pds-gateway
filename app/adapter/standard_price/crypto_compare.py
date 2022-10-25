@@ -1,11 +1,11 @@
-from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
+from app.adapter.standard_price import StandardPrice, Input, Output
 from typing import Dict
 from datetime import datetime
 import httpx
 import os
 
 
-class CryptoCompare(StandardCryptoPrice):
+class CryptoCompare(StandardPrice):
     api_url: str = "https://min-api.cryptocompare.com/data/pricemulti"
     api_key: str = None
     symbols_map: Dict[str, str] = None

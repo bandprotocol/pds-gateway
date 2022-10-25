@@ -1,11 +1,11 @@
-from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
+from app.adapter.standard_price import StandardPrice, Input, Output
 from typing import Dict
 from datetime import datetime, timezone
 import httpx
 import os
 
 
-class CoinMarketCap(StandardCryptoPrice):
+class CoinMarketCap(StandardPrice):
     api_url: str = "https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest"
     api_key: str
     symbols_map: Dict[str, str] = None

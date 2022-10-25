@@ -1,10 +1,10 @@
 from datetime import datetime
-from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
+from app.adapter.standard_price import StandardPrice, Input, Output
 import httpx
 import os
 
 
-class InternalService(StandardCryptoPrice):
+class InternalService(StandardPrice):
     # URL that allow traffic from gateway only
     api_url: str = None
 
