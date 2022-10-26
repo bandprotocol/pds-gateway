@@ -1,6 +1,11 @@
 import functools
+import json
+from bson import json_util
+
+
+from sanic import Request, response
 from sanic.exceptions import SanicException
-from sanic.request import Request
+
 
 from app.utils.helper import get_bandchain_params_with_type
 from app.report.db import DB, Report, VerifyErrorType, Verify, ProviderResponse
@@ -102,3 +107,31 @@ class CollectRequestData:
                 raise e
 
         return wrapper_collect_request_data
+
+
+class GetStatus:
+    def __init__(self, config, db: DB = None):
+        self.config = config
+        self.db = db
+
+    def __call__(self, func):
+        @functools.wraps(func)
+        async def wrapper_get_status(*args, **kwargs):
+            res = func(*args, **kwargs)
+            if self.db:
+                try:
+                    latest_request_info = await self.db.get_latest_request_info()
+                    res_dict = {
+                        "gateway_info": {
+                            "allow_data_source_ids": self.config.ALLOWED_DATA_SOURCE_IDS,
+                            "max_delay_verification": self.config.MAX_DELAY_VERIFICATION,
+                        },
+                        "latest_request_info": latest_request_info,
+                    }
+
+                    res = response.json(json.loads(json_util.dumps(res_dict)))
+                except Exception as e:
+                    raise SanicException(f"{e}", status_code=500)
+            return res
+
+        return wrapper_get_status

@@ -7,7 +7,7 @@ from pytimeparse.timeparse import timeparse
 
 
 from app.utils import helper, cache
-from app.report import CollectVerifyData, CollectRequestData
+from app.report import CollectVerifyData, CollectRequestData, GetStatus
 from app.report.db import DB, Verify
 
 
@@ -88,5 +88,10 @@ def create_app(name, config):
             raise SanicException(f"{e}", status_code=e.response.status_code)
         except Exception as e:
             raise SanicException(f"{e}", status_code=500)
+
+    @app.get("/status")
+    @GetStatus(app.config, db=app.ctx.db)
+    def get_report_status(request: Request):
+        return response.HTTPResponse()
 
     return app
