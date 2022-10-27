@@ -1,4 +1,3 @@
-from aifc import Error
 from sanic import Request, Sanic, response
 from sanic.log import logger
 from sanic.exceptions import SanicException
