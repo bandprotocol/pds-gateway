@@ -25,11 +25,11 @@ class CollectVerifyData:
                 bandchain_params = get_bandchain_params_with_type(request.headers)
 
                 if self.db:
-                    verify_error = VerifyErrorType.ERROR_VERIFICATION
-                    if e.message[0:19] == "wrong datasource_id":
-                        verify_error = VerifyErrorType.UNSUPPORTED_DS_ID
+                    verify_error = e.context.get("verify_error")
+                    if verify_error is not None:
+                        verify_error = VerifyErrorType.ERROR_VERIFICATION
 
-                    await self.db.save_report(
+                    self.db.save_report(
                         Report(
                             user_ip=client_ip,
                             reporter_address=bandchain_params.get("reporter", None),
@@ -45,7 +45,7 @@ class CollectVerifyData:
                         )
                     )
 
-                raise e
+                raise SanicException(f"{e}", status_code=e.status_code)
 
         return wrapper_collect_verify_data
 
@@ -65,7 +65,7 @@ class CollectRequestData:
 
                 if self.db:
                     res_json = bytes_to_json(res.body)
-                    await self.db.save_report(
+                    self.db.save_report(
                         Report(
                             user_ip=client_ip,
                             reporter_address=bandchain_params.get("reporter", None),
@@ -83,7 +83,7 @@ class CollectRequestData:
 
             except SanicException as e:
                 if self.db:
-                    await self.db.save_report(
+                    self.db.save_report(
                         Report(
                             user_ip=client_ip,
                             reporter_address=bandchain_params.get("reporter", None),
