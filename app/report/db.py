@@ -54,8 +54,7 @@ class Report:
 
 class DB:
     def __init__(self, mongo_db_url: str, db_name: str):
-        self.client = motor_asyncio.AsyncIOMotorClient(mongo_db_url)
-        self.db_name = db_name
+        self.db = motor_asyncio.AsyncIOMotorClient(mongo_db_url)[db_name]
 
     async def save_report(self, report: Report):
-        await self.client[self.db_name]["report"].insert_one(report.dict())
+        await self.db["report"].insert_one(report.dict())
