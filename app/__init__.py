@@ -50,7 +50,7 @@ def create_app(name, config):
     @CollectVerifyData(db=app.ctx.db)
     async def verify(request: Request):
         try:
-            if app.config.MODE == "production":
+            if app.config.MODE == "production" and request.path != "/status":
                 # pass verify if already cache
                 if cache_data.get_data(helper.get_band_signature_hash(request.headers)):
                     return
@@ -59,8 +59,7 @@ def create_app(name, config):
                 helper.verify_data_source_id(verify["data_source_id"])
                 request.ctx.verify = Verify(response_code=200, is_delay=verify["is_delay"])
             else:
-                helper.verify_data_source_id("2")
-                request.ctx.verify = Verify()
+                request.ctx.verify = Verify(response_code=200)
 
         except SanicException as e:
             raise e

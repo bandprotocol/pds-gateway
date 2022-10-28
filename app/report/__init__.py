@@ -2,10 +2,8 @@ import functools
 import json
 from bson import json_util
 
-
 from sanic import Request, response
 from sanic.exceptions import SanicException
-
 
 from app.utils.helper import get_bandchain_params_with_type
 from app.report.db import DB, Report, VerifyErrorType, Verify, ProviderResponse
@@ -120,13 +118,15 @@ class GetStatus:
             res = func(*args, **kwargs)
             if self.db:
                 try:
-                    latest_request_info = await self.db.get_latest_request_info()
+                    latest_request = await self.db.get_latest_request_info()
+                    latest_failed_request = await self.db.get_latest_verify_failed()
                     res_dict = {
                         "gateway_info": {
                             "allow_data_source_ids": self.config.ALLOWED_DATA_SOURCE_IDS,
                             "max_delay_verification": self.config.MAX_DELAY_VERIFICATION,
                         },
-                        "latest_request_info": latest_request_info,
+                        "latest_request": latest_request,
+                        "latest_failed_request": latest_failed_request,
                     }
 
                     res = response.json(json.loads(json_util.dumps(res_dict)))

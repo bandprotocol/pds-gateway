@@ -51,9 +51,22 @@ class DB:
     def __init__(self, mongo_db_url: str, db_name: str):
         self.db = motor_asyncio.AsyncIOMotorClient(mongo_db_url)[db_name]
 
-    def get_latest_request_info(self):
-        cursor = self.client[self.db_name]["report"].find().sort("created_at", -1).limit(1)
-        latest_request_info = cursor.to_list(length=1)
+    async def get_latest_request_info(self):
+        cursor = self.db["report"].find({}, {"_id": 0, "user_ip": 0}).sort("created_at", -1).limit(1)
+        latest_request_info = await cursor.to_list(length=1)
+        return latest_request_info[0]
+
+    async def get_latest_verify_failed(self):
+        cursor = (
+            self.db["report"]
+            .find(
+                {"$or": [{"verify.response_code": {"$ne": 200}}, {"provider_response.response_code": {"$ne": 200}}]},
+                {"_id": 0, "user_ip": 0},
+            )
+            .sort("created_at", -1)
+            .limit(1)
+        )
+        latest_request_info = await cursor.to_list(length=1)
         return latest_request_info[0]
 
     def save_report(self, report: Report):
