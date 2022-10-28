@@ -1,15 +1,9 @@
 from datetime import datetime
-from enum import Enum
-from traceback import print_tb
 
 from motor import motor_asyncio
 from dataclasses import dataclass, field, asdict
 
-
-class VerifyErrorType(Enum):
-    ERROR_VERIFICATION = "error_verification"
-    UNSUPPORTED_DS_ID = "unsupported_ds_id"
-    NODE_DELAYED = "node_delayed"
+from app.utils.types import VerifyErrorType
 
 
 @dataclass
@@ -55,13 +49,12 @@ class Report:
 
 class DB:
     def __init__(self, mongo_db_url: str, db_name: str):
-        self.client = motor_asyncio.AsyncIOMotorClient(mongo_db_url)
-        self.db_name = db_name
+        self.db = motor_asyncio.AsyncIOMotorClient(mongo_db_url)[db_name]
 
-    async def get_latest_request_info(self):
+    def get_latest_request_info(self):
         cursor = self.client[self.db_name]["report"].find().sort("created_at", -1).limit(1)
-        latest_request_info = await cursor.to_list(length=1)
+        latest_request_info = cursor.to_list(length=1)
         return latest_request_info[0]
 
-    async def save_report(self, report: Report):
-        await self.client[self.db_name]["report"].insert_one(report.dict())
+    def save_report(self, report: Report):
+        self.db["report"].insert_one(report.dict())

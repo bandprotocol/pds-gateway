@@ -1,7 +1,10 @@
 from sanic import Sanic
+from sanic.exceptions import SanicException
 from typing import Dict
 from importlib import import_module
 import httpx
+
+from app.utils.types import VerifyErrorType
 
 
 def get_app():
@@ -27,7 +30,7 @@ def get_bandchain_params_with_type(headers: Dict[str, str]) -> Dict[str, str]:
     return params
 
 
-def get_request_hash(headers: Dict[str, str]) -> str:
+def get_band_signature_hash(headers: Dict[str, str]) -> str:
     return hash(headers["BAND_SIGNATURE"])
 
 
@@ -65,7 +68,10 @@ async def verify_request(headers: Dict[str, str]) -> dict:
 
 def verify_data_source_id(data_source_id: str) -> bool:
     if data_source_id not in get_app().config.ALLOWED_DATA_SOURCE_IDS:
-        raise Exception(
-            f"wrong datasource_id. expected {get_app().config.ALLOWED_DATA_SOURCE_IDS}, got {data_source_id}."
+        raise SanicException(
+            f"wrong datasource_id. expected {get_app().config.ALLOWED_DATA_SOURCE_IDS}, got {data_source_id}.",
+            status_code=401,
+            context={"verify_error": VerifyErrorType.UNSUPPORTED_DS_ID},
         )
+
     return True
