@@ -59,7 +59,6 @@ def create_app(name, config):
                 helper.verify_data_source_id(verify["data_source_id"])
                 request.ctx.verify = Verify(response_code=200, is_delay=verify["is_delay"])
             else:
-                helper.verify_data_source_id("2")
                 request.ctx.verify = Verify()
 
         except SanicException as e:
