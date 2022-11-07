@@ -129,7 +129,7 @@ class GetStatus:
                         "latest_failed_request": latest_failed_request,
                     }
 
-                    res = response.json(json.loads(json_util.dumps(res_dict)))
+                    res = response.json(res_dict, default=str)
                 except Exception as e:
                     raise SanicException(f"{e}", status_code=500)
             return res
