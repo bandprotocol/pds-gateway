@@ -18,7 +18,7 @@ def get_bandchain_params(headers: Dict[str, str]) -> Dict[str, str]:
 
 def get_bandchain_params_with_type(headers: Dict[str, str]) -> Dict[str, str]:
     params = {}
-    params_type_int = ["request_id", "from_ds_id", "external_id"]
+    params_type_int = ["request_id", "data_source_id", "external_id"]
     for k, v in headers.items():
         if k.lower().startswith("band_"):
             band_arg = k.lower()[5:]
@@ -69,7 +69,7 @@ async def verify_request(headers: Dict[str, str]) -> dict:
 def verify_data_source_id(data_source_id: str) -> bool:
     if data_source_id not in get_app().config.ALLOWED_DATA_SOURCE_IDS:
         raise SanicException(
-            f"wrong datasource_id. expected {get_app().config.ALLOWED_DATA_SOURCE_IDS}, got {data_source_id}.",
+            f"wrong data_source_id. expected {get_app().config.ALLOWED_DATA_SOURCE_IDS}, got {data_source_id}.",
             status_code=401,
             context={"verify_error": VerifyErrorType.UNSUPPORTED_DS_ID},
         )

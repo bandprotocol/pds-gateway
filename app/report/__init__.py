@@ -38,7 +38,7 @@ class CollectVerifyData:
                             reporter_address=bandchain_params.get("reporter", None),
                             validator_address=bandchain_params.get("validator", None),
                             request_id=bandchain_params.get("request_id", None),
-                            from_ds_id=bandchain_params.get("from_ds_id", None),
+                            data_source_id=bandchain_params.get("data_source_id", None),
                             external_id=bandchain_params.get("external_id", None),
                             verify=Verify(
                                 response_code=int(e.status_code),
@@ -74,7 +74,7 @@ class CollectRequestData:
                             reporter_address=bandchain_params.get("reporter", None),
                             validator_address=bandchain_params.get("validator", None),
                             request_id=bandchain_params.get("request_id", None),
-                            from_ds_id=bandchain_params.get("from_ds_id", None),
+                            data_source_id=bandchain_params.get("data_source_id", None),
                             external_id=bandchain_params.get("external_id", None),
                             cached_data=res_json.get("cached_data", False),
                             verify=request.ctx.verify.dict(),
@@ -92,7 +92,7 @@ class CollectRequestData:
                             reporter_address=bandchain_params.get("reporter", None),
                             validator_address=bandchain_params.get("validator", None),
                             request_id=bandchain_params.get("request_id", None),
-                            from_ds_id=bandchain_params.get("from_ds_id", None),
+                            data_source_id=bandchain_params.get("data_source_id", None),
                             external_id=bandchain_params.get("external_id", None),
                             verify=request.ctx.verify.dict(),
                             provider_response=ProviderResponse(
