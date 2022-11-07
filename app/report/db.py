@@ -39,10 +39,6 @@ class Report:
     provider_response: dict = field(default=None)
     created_at: datetime = field(default=datetime.utcnow())
 
-    def __post_init__(self):
-        if self.user_ip == None:
-            raise TypeError(f"__init__() missing user_ip field")
-
     def dict(self):
         return {k: v for k, v in asdict(self).items() if v or type(v) is bool}
 
