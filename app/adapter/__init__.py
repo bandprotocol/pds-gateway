@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from sanic import Request
+from fastapi import Request
 
 
 class Adapter(ABC):
@@ -20,7 +20,7 @@ class Adapter(ABC):
         pass
 
     async def unified_call(self, request: Request):
-        input = self.phrase_input(request.args)
+        input = self.phrase_input(dict(request.query_params))
         output = await self.call(input)
         self.verify_output(input, output)
         return self.phrase_output(output)

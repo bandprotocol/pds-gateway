@@ -1,7 +1,13 @@
+from pydantic import BaseModel
 from enum import Enum
 
 
 class VerifyErrorType(Enum):
-    ERROR_VERIFICATION = "error_verification"
+    FAILED_VERIFICATION = "failed_verification"
     UNSUPPORTED_DS_ID = "unsupported_ds_id"
-    NODE_DELAYED = "node_delayed"
+    SERVER_ERROR = "server_error"
+
+
+class ErrorResponse(BaseModel):
+    verify_error_type: str
+    msg: str

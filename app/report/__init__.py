@@ -1,13 +1,11 @@
 import functools
-import json
-from bson import json_util
-
-from sanic import Request, response
-from sanic.exceptions import SanicException
+from fastapi import Request, HTTPException
+from fastapi.responses import JSONResponse
 
 from app.utils.helper import get_bandchain_params_with_type
-from app.report.db import DB, Report, VerifyErrorType, Verify, ProviderResponse
-from app.report.helper import bytes_to_json
+from app.report.db import DB, Report, Verify, ProviderResponse
+
+import json
 
 
 class CollectVerifyData:
@@ -17,38 +15,31 @@ class CollectVerifyData:
     def __call__(self, func):
         @functools.wraps(func)
         async def wrapper_collect_verify_data(*args, **kwargs):
-            try:
-                return await func(*args, **kwargs)
+            res = await func(*args, **kwargs)
 
-            except SanicException as e:
-                # save when exception happen
+            if type(res) == JSONResponse and res.status_code != 200 and self.db:
                 request = [arg for arg in args if isinstance(arg, Request)][0]
-
-                client_ip = request.ip
+                client_ip = request.client.host
                 bandchain_params = get_bandchain_params_with_type(request.headers)
+                error_response = json.loads(res.body)["error_response"]
 
-                if self.db:
-                    verify_error = e.context.get("verify_error")
-                    if verify_error is not None:
-                        verify_error = VerifyErrorType.ERROR_VERIFICATION
-
-                    self.db.save_report(
-                        Report(
-                            user_ip=client_ip,
-                            reporter_address=bandchain_params.get("reporter", None),
-                            validator_address=bandchain_params.get("validator", None),
-                            request_id=bandchain_params.get("request_id", None),
-                            data_source_id=bandchain_params.get("data_source_id", None),
-                            external_id=bandchain_params.get("external_id", None),
-                            verify=Verify(
-                                response_code=int(e.status_code),
-                                error_type=verify_error.value,
-                                error_msg=e.args[0],
-                            ).dict(),
-                        )
+                self.db.save_report(
+                    Report(
+                        user_ip=client_ip,
+                        reporter_address=bandchain_params.get("reporter", None),
+                        validator_address=bandchain_params.get("validator", None),
+                        request_id=bandchain_params.get("request_id", None),
+                        data_source_id=bandchain_params.get("data_source_id", None),
+                        external_id=bandchain_params.get("external_id", None),
+                        verify=Verify(
+                            response_code=res.status_code,
+                            error_type=error_response["verify_error_type"],
+                            error_msg=error_response["msg"],
+                        ).to_dict(),
                     )
+                )
 
-                raise SanicException(f"{e}", status_code=e.status_code)
+            return res
 
         return wrapper_collect_verify_data
 
@@ -58,51 +49,53 @@ class CollectRequestData:
         self.db = db
 
     def __call__(self, func):
+        @functools.wraps(func)
         async def wrapper_collect_request_data(*args, **kwargs):
-            try:
-                request = [arg for arg in args if isinstance(arg, Request)][0]
-                client_ip = request.ip
+            res = await func(*args, **kwargs)
+
+            if type(res) == JSONResponse and res.status_code != 200 and self.db:
+                request = kwargs.get("request")
+                client_ip = request.client.host
                 bandchain_params = get_bandchain_params_with_type(request.headers)
 
-                res = await func(*args, **kwargs)
+                error_msg = json.loads(res.body)["error_msg"]
 
-                if self.db:
-                    res_json = bytes_to_json(res.body)
-                    self.db.save_report(
-                        Report(
-                            user_ip=client_ip,
-                            reporter_address=bandchain_params.get("reporter", None),
-                            validator_address=bandchain_params.get("validator", None),
-                            request_id=bandchain_params.get("request_id", None),
-                            data_source_id=bandchain_params.get("data_source_id", None),
-                            external_id=bandchain_params.get("external_id", None),
-                            cached_data=res_json.get("cached_data", False),
-                            verify=request.ctx.verify.dict(),
-                            provider_response=ProviderResponse(response_code=res.status).dict(),
-                        )
+                self.db.save_report(
+                    Report(
+                        user_ip=client_ip,
+                        reporter_address=bandchain_params.get("reporter", None),
+                        validator_address=bandchain_params.get("validator", None),
+                        request_id=bandchain_params.get("request_id", None),
+                        data_source_id=bandchain_params.get("data_source_id", None),
+                        external_id=bandchain_params.get("external_id", None),
+                        cached_data=False,
+                        verify=request.state.verify.to_dict(),
+                        provider_response=ProviderResponse(
+                            response_code=res.status_code, error_msg=error_msg
+                        ).to_dict(),
                     )
+                )
 
-                return res
+            else:
+                request = kwargs.get("request")
+                client_ip = request.client.host
+                bandchain_params = get_bandchain_params_with_type(request.headers)
 
-            except SanicException as e:
-                if self.db:
-                    self.db.save_report(
-                        Report(
-                            user_ip=client_ip,
-                            reporter_address=bandchain_params.get("reporter", None),
-                            validator_address=bandchain_params.get("validator", None),
-                            request_id=bandchain_params.get("request_id", None),
-                            data_source_id=bandchain_params.get("data_source_id", None),
-                            external_id=bandchain_params.get("external_id", None),
-                            verify=request.ctx.verify.dict(),
-                            provider_response=ProviderResponse(
-                                response_code=e.status_code,
-                                error_msg=e.args[0],
-                            ).dict(),
-                        )
+                self.db.save_report(
+                    Report(
+                        user_ip=client_ip,
+                        reporter_address=bandchain_params.get("reporter", None),
+                        validator_address=bandchain_params.get("validator", None),
+                        request_id=bandchain_params.get("request_id", None),
+                        data_source_id=bandchain_params.get("data_source_id", None),
+                        external_id=bandchain_params.get("external_id", None),
+                        cached_data=res.get("cached_data", False),
+                        verify=request.state.verify.to_dict(),
+                        provider_response=ProviderResponse(response_code=200).to_dict(),
                     )
+                )
 
-                raise e
+            return res
 
         return wrapper_collect_request_data
 
@@ -129,9 +122,9 @@ class GetStatus:
                         "latest_failed_request": latest_failed_request,
                     }
 
-                    res = response.json(res_dict, default=str)
+                    res = res_dict
                 except Exception as e:
-                    raise SanicException(f"{e}", status_code=500)
+                    raise HTTPException(f"{e}", status_code=500)
             return res
 
         return wrapper_get_status

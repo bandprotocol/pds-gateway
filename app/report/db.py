@@ -1,61 +1,58 @@
 from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, Field
 
 from motor import motor_asyncio
-from dataclasses import dataclass, field, asdict
-
-from app.utils.types import VerifyErrorType
 
 
-@dataclass
-class Verify:
-    response_code: int = field(default=None)
-    is_delay: bool = field(default=False)
-    error_type: VerifyErrorType = field(default=None)
-    error_msg: str = field(default=None)
+class Verify(BaseModel):
+    response_code: int = Field(...)
+    is_delay: bool = Field(default=False)
+    error_type: Optional[str]
+    error_msg: Optional[str]
 
-    def dict(self):
-        return {k: v for k, v in asdict(self).items() if v or type(v) is bool}
+    def to_dict(self):
+        return {k: v for k, v in self.dict().items() if v or type(v) is bool}
 
-
-@dataclass
-class ProviderResponse:
-    response_code: int = field(default=None)
-    error_msg: str = field(default=None)
-
-    def dict(self):
-        return {k: v for k, v in asdict(self).items() if v or type(v) is bool}
+        # return {k: v for k, v in asdict(self).items() if v or type(v) is bool}
 
 
-@dataclass
-class Report:
-    user_ip: str = field(default=None)
-    reporter_address: str = field(default=None)
-    validator_address: str = field(default=None)
-    request_id: int = field(default=None)
-    data_source_id: int = field(default=None)
-    external_id: int = field(default=None)
-    cached_data: bool = field(default=False)
-    verify: dict = field(default=None)
-    provider_response: dict = field(default=None)
-    created_at: datetime = field(default=datetime.utcnow())
+class ProviderResponse(BaseModel):
+    response_code: int = Field(...)
+    error_msg: Optional[str]
 
-    def dict(self):
-        return {k: v for k, v in asdict(self).items() if v or type(v) is bool}
+    def to_dict(self):
+        return {k: v for k, v in self.dict().items() if v}
+
+
+class Report(BaseModel):
+    user_ip: str = Field(...)
+    reporter_address: Optional[str]
+    validator_address: Optional[str]
+    request_id: Optional[int]
+    data_source_id: Optional[int]
+    external_id: Optional[int]
+    cached_data: Optional[bool]
+    verify: dict = Field(...)
+    provider_response: Optional[dict]
+    created_at: datetime = Field(default=datetime.utcnow())
+
+    def to_dict(self):
+        return {k: v for k, v in self.dict().items() if v or type(v) is bool}
 
 
 class DB:
     def __init__(self, mongo_db_url: str, db_name: str):
-        self.db = motor_asyncio.AsyncIOMotorClient(mongo_db_url)[db_name]
+        self.report = motor_asyncio.AsyncIOMotorClient(mongo_db_url)[db_name].get_collection("report")
 
     async def get_latest_request_info(self):
-        cursor = self.db["report"].find({}, {"_id": 0, "user_ip": 0}).sort("created_at", -1).limit(1)
+        cursor = self.report.find({}, {"_id": 0, "user_ip": 0}).sort("created_at", -1).limit(1)
         latest_request_info = await cursor.to_list(length=1)
         return latest_request_info[0]
 
     async def get_latest_verify_failed(self):
         cursor = (
-            self.db["report"]
-            .find(
+            self.report.find(
                 {"$or": [{"verify.response_code": {"$ne": 200}}, {"provider_response.response_code": {"$ne": 200}}]},
                 {"_id": 0, "user_ip": 0},
             )
@@ -66,4 +63,4 @@ class DB:
         return latest_request_info[0]
 
     def save_report(self, report: Report):
-        self.db["report"].insert_one(report.dict())
+        self.report.insert_one(report.to_dict())

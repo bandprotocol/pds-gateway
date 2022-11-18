@@ -1,98 +1,122 @@
-from sanic import Request, Sanic, response
-from sanic.log import logger
-from sanic.exceptions import SanicException
+from functools import lru_cache
+from fastapi import FastAPI, Request, Depends, HTTPException
 from httpx import HTTPStatusError
 from pytimeparse.timeparse import timeparse
+from fastapi.responses import JSONResponse
 
-
+from app.report import DB, Verify
+from app.utils.types import VerifyErrorType
 from app.utils import helper, cache
+from app.utils.exception import UnsupportedDsException
+from app.adapter import Adapter
 from app.report import CollectVerifyData, CollectRequestData, GetStatus
-from app.report.db import DB, Verify
 
 
-def create_app(name, config):
-    app = Sanic(name)
-    app.update_config(config)
+def create_app(config):
+    app = FastAPI()
 
-    # only for save report on DB
-    app.ctx.db = None
-    if config.MONGO_DB_URL and config.COLLECTION_DB_NAME:
-        app.ctx.db = DB(config.MONGO_DB_URL, config.COLLECTION_DB_NAME)
-        logger.info(f"DB : save report data on mongo db")
+    print(f"GATEWAY_MODE: {config.MODE}")
 
-    # init cache memory
-    cache_data = cache.Cache(app.config.CACHE_SIZE, timeparse(app.config.TTL_TIME))
-
-    def init_app(app):
-        logger.info(f"GATEWAY_MODE: {app.config.MODE}")
-
-        if app.ctx.db == None:
-            logger.info(
-                f"DB : No DB -> if you want to save data on db please add [MONGO_DB_URL, COLLECTION_DB_NAME] in env"
+    def init_db():
+        app.state.db = None
+        if config.MONGO_DB_URL and config.COLLECTION_DB_NAME:
+            app.state.db = DB(config.MONGO_DB_URL, config.COLLECTION_DB_NAME)
+            print(f"DB : init report data on mongo db")
+        else:
+            print(
+                f"DB : No DB config -> if you want to save data on db please add [MONGO_DB_URL, COLLECTION_DB_NAME] in env"
             )
 
-    def init_adapter(app):
+    # init db
+    init_db()
+
+    # init cache memory
+    app.state.cache_data = cache.Cache(config.CACHE_SIZE, timeparse(config.TTL_TIME))
+
+    @lru_cache()
+    def get_adaptor() -> Adapter:
         # check adapter configuration
-        if app.config.ADAPTER_TYPE is None:
+        if config.ADAPTER_TYPE is None:
             raise Exception("MISSING 'ADAPTER_TYPE' ENV")
-        if app.config.ADAPTER_NAME is None:
+        if config.ADAPTER_NAME is None:
             raise Exception("MISSING 'ADAPTER_NAME' ENV")
 
-        logger.info(f"ADAPTER: {app.config.ADAPTER_TYPE}.{app.config.ADAPTER_NAME}")
-        app.ctx.adapter = helper.get_adapter(app.config.ADAPTER_TYPE, app.config.ADAPTER_NAME)
+        return helper.get_adapter(config.ADAPTER_TYPE, config.ADAPTER_NAME)
 
-    @app.main_process_start
-    def init(app):
-        init_app(app)
-        init_adapter(app)
-
-    @app.on_request
-    @CollectVerifyData(db=app.ctx.db)
-    async def verify(request: Request):
+    @app.middleware("http")
+    @CollectVerifyData(db=app.state.db)
+    async def verify(request: Request, call_next):
         try:
-            if app.config.MODE == "production" and request.path != "/status":
+            if config.MODE == "production" and request.url.path != "/status":
                 # pass verify if already cache
-                if cache_data.get_data(helper.get_band_signature_hash(request.headers)):
-                    return
+                if app.state.cache_data.get_data(helper.get_band_signature_hash(request.headers)):
+                    return await call_next(request)
 
-                verify = await helper.verify_request(request.headers)
-                helper.verify_data_source_id(verify["data_source_id"])
-                request.ctx.verify = Verify(response_code=200, is_delay=verify["is_delay"])
+                verified = await helper.verify_request(
+                    request.headers, config.VERIFY_REQUEST_URL, config.MAX_DELAY_VERIFICATION
+                )
+                helper.verify_data_source_id(verified["data_source_id"], config.ALLOWED_DATA_SOURCE_IDS.split(","))
+                request.state.verify = Verify(response_code=200, is_delay=verified["is_delay"])
+
+                return await call_next(request=request)
+
             else:
-                request.ctx.verify = Verify(response_code=200)
+                request.state.verify = Verify(response_code=200, is_delay=True)
+                return await call_next(request=request)
 
-        except SanicException as e:
-            raise e
-        except Exception as e:
-            raise SanicException(f"{e}", status_code=401)
-
-    @app.get("/")
-    @CollectRequestData(db=app.ctx.db)
-    async def request(request: Request):
-        if app.config.MODE == "production":
-            # get cache data
-            latest_data = cache_data.get_data(helper.get_band_signature_hash(request.headers))
-            if latest_data:
-                latest_data["cached_data"] = True
-                return response.json(latest_data)
-
-        try:
-            output = await app.ctx.adapter.unified_call(request)
-
-            if app.config.MODE == "production":
-                # cache data
-                cache_data.set_data(helper.get_band_signature_hash(request.headers), output)
-
-            return response.json(output)
+        except UnsupportedDsException as e:
+            return helper.json_verify_error_response(
+                401,
+                VerifyErrorType.UNSUPPORTED_DS_ID,
+                f"wrong data_source_id. expected {e.allowed_data_source_ids}, got {e.data_source_id}.",
+            )
 
         except HTTPStatusError as e:
-            raise SanicException(f"{e}", status_code=e.response.status_code)
+            return helper.json_verify_error_response(
+                e.response.status_code,
+                VerifyErrorType.FAILED_VERIFICATION,
+                f"{e}",
+            )
+
         except Exception as e:
-            raise SanicException(f"{e}", status_code=500)
+            return helper.json_verify_error_response(
+                500,
+                VerifyErrorType.SERVER_ERROR,
+                f"{e}",
+            )
+
+    @app.get("/")
+    @CollectRequestData(db=app.state.db)
+    async def request(request: Request, adapter: Adapter = Depends(get_adaptor)):
+        if config.MODE == "production":
+            # get cache data
+            latest_data = app.state.cache_data.get_data(helper.get_band_signature_hash(request.headers))
+            if latest_data:
+                latest_data["cached_data"] = True
+                return latest_data
+
+        try:
+            output = await adapter.unified_call(request)
+            if config.MODE == "production":
+                # cache data
+                app.state.cache_data.set_data(helper.get_band_signature_hash(request.headers), output)
+
+            return output
+
+        except HTTPStatusError as e:
+            return JSONResponse(
+                status_code=e.response.status_code,
+                content={"error_msg": f"{e}"},
+            )
+        except Exception as e:
+            return JSONResponse(
+                status_code=500,
+                content={"error_msg": f"{e}"},
+            )
 
     @app.get("/status")
-    @GetStatus(app.config, db=app.ctx.db)
+    @GetStatus(config, app.state.db)
     def get_report_status(request: Request):
-        return response.HTTPResponse()
+        return {}
 
     return app

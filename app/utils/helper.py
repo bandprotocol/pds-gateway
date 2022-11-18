@@ -1,14 +1,11 @@
-from sanic import Sanic
-from sanic.exceptions import SanicException
-from typing import Dict
+from typing import Dict, List
 from importlib import import_module
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 import httpx
 
-from app.utils.types import VerifyErrorType
-
-
-def get_app():
-    return Sanic.get_app()
+from app.utils.exception import UnsupportedDsException
+from app.utils.types import VerifyErrorType, ErrorResponse
 
 
 def get_bandchain_params(headers: Dict[str, str]) -> Dict[str, str]:
@@ -34,8 +31,8 @@ def get_band_signature_hash(headers: Dict[str, str]) -> str:
     return hash(headers["BAND_SIGNATURE"])
 
 
-def add_params_config(params: Dict[str, str]) -> Dict[str, str]:
-    params["max_delay"] = get_app().config.MAX_DELAY_VERIFICATION
+def add_params_config(params: Dict[str, str], max_delay_verification: str) -> Dict[str, str]:
+    params["max_delay"] = max_delay_verification
     return params
 
 
@@ -45,17 +42,16 @@ def get_adapter(type: str, name: str):
     return AdapterClass()
 
 
-async def verify_request(headers: Dict[str, str]) -> dict:
+async def verify_request(headers: Dict[str, str], verify_request_url: str, max_delay_verification: str) -> dict:
     client = httpx.AsyncClient()
 
     res = await client.get(
-        url=get_app().config.VERIFY_REQUEST_URL,
-        params=add_params_config(get_bandchain_params(headers)),
+        url=verify_request_url,
+        params=add_params_config(get_bandchain_params(headers), max_delay_verification),
     )
 
     # check result of request
-    if res.status_code != 200:
-        raise Exception(res.text)
+    res.raise_for_status()
 
     body = res.json()
     # check node delay
@@ -66,12 +62,22 @@ async def verify_request(headers: Dict[str, str]) -> dict:
     return {"is_delay": body.get("is_delay", False), "data_source_id": body.get("data_source_id", None)}
 
 
-def verify_data_source_id(data_source_id: str) -> bool:
-    if data_source_id not in get_app().config.ALLOWED_DATA_SOURCE_IDS:
-        raise SanicException(
-            f"wrong data_source_id. expected {get_app().config.ALLOWED_DATA_SOURCE_IDS}, got {data_source_id}.",
-            status_code=401,
-            context={"verify_error": VerifyErrorType.UNSUPPORTED_DS_ID},
-        )
+def verify_data_source_id(data_source_id: str, allowed_data_source_ids: List[str]) -> bool:
+    if data_source_id not in allowed_data_source_ids:
+        raise UnsupportedDsException(allowed_data_source_ids=allowed_data_source_ids, data_source_id=data_source_id)
 
     return True
+
+
+def json_verify_error_response(status_code: int, verify_error_type: VerifyErrorType, msg: str):
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "error_response": jsonable_encoder(
+                ErrorResponse(
+                    verify_error_type=verify_error_type.value,
+                    msg=msg,
+                )
+            )
+        },
+    )
