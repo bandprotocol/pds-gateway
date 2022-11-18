@@ -1,5 +1,4 @@
-from functools import lru_cache
-from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi import FastAPI, Request
 from httpx import HTTPStatusError
 from pytimeparse.timeparse import timeparse
 from fastapi.responses import JSONResponse
@@ -27,21 +26,20 @@ def create_app(config):
                 f"DB : No DB config -> if you want to save data on db please add [MONGO_DB_URL, COLLECTION_DB_NAME] in env"
             )
 
-    # init db
-    init_db()
-
-    # init cache memory
-    app.state.cache_data = cache.Cache(config.CACHE_SIZE, timeparse(config.TTL_TIME))
-
-    @lru_cache()
-    def get_adaptor() -> Adapter:
+    def init_adaptor() -> Adapter:
         # check adapter configuration
         if config.ADAPTER_TYPE is None:
             raise Exception("MISSING 'ADAPTER_TYPE' ENV")
         if config.ADAPTER_NAME is None:
             raise Exception("MISSING 'ADAPTER_NAME' ENV")
 
-        return helper.get_adapter(config.ADAPTER_TYPE, config.ADAPTER_NAME)
+        app.state.adaptor = helper.get_adapter(config.ADAPTER_TYPE, config.ADAPTER_NAME)
+
+    init_db()
+    init_adaptor()
+
+    # init cache memory
+    app.state.cache_data = cache.Cache(config.CACHE_SIZE, timeparse(config.TTL_TIME))
 
     @app.middleware("http")
     @CollectVerifyData(db=app.state.db)
@@ -87,7 +85,7 @@ def create_app(config):
 
     @app.get("/")
     @CollectRequestData(db=app.state.db)
-    async def request(request: Request, adapter: Adapter = Depends(get_adaptor)):
+    async def request(request: Request):
         if config.MODE == "production":
             # get cache data
             latest_data = app.state.cache_data.get_data(helper.get_band_signature_hash(request.headers))
@@ -96,7 +94,7 @@ def create_app(config):
                 return latest_data
 
         try:
-            output = await adapter.unified_call(request)
+            output = await app.state.adaptor.unified_call(request)
             if config.MODE == "production":
                 # cache data
                 app.state.cache_data.set_data(helper.get_band_signature_hash(request.headers), output)
