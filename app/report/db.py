@@ -14,8 +14,6 @@ class Verify(BaseModel):
     def to_dict(self):
         return {k: v for k, v in self.dict().items() if v or type(v) is bool}
 
-        # return {k: v for k, v in asdict(self).items() if v or type(v) is bool}
-
 
 class ProviderResponse(BaseModel):
     response_code: int = Field(...)
