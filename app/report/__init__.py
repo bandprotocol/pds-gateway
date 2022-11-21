@@ -53,47 +53,44 @@ class CollectRequestData:
         async def wrapper_collect_request_data(*args, **kwargs):
             res = await func(*args, **kwargs)
 
-            if type(res) == JSONResponse and res.status_code != 200 and self.db:
+            if self.db:
                 request = kwargs.get("request")
                 client_ip = request.client.host
                 bandchain_params = get_bandchain_params_with_type(request.headers)
 
-                error_msg = json.loads(res.body)["error_msg"]
+                if type(res) == JSONResponse and res.status_code != 200:
+                    error_msg = json.loads(res.body)["error_msg"]
 
-                self.db.save_report(
-                    Report(
-                        user_ip=client_ip,
-                        reporter_address=bandchain_params.get("reporter", None),
-                        validator_address=bandchain_params.get("validator", None),
-                        request_id=bandchain_params.get("request_id", None),
-                        data_source_id=bandchain_params.get("data_source_id", None),
-                        external_id=bandchain_params.get("external_id", None),
-                        cached_data=False,
-                        verify=request.state.verify.to_dict(),
-                        provider_response=ProviderResponse(
-                            response_code=res.status_code, error_msg=error_msg
-                        ).to_dict(),
+                    self.db.save_report(
+                        Report(
+                            user_ip=client_ip,
+                            reporter_address=bandchain_params.get("reporter", None),
+                            validator_address=bandchain_params.get("validator", None),
+                            request_id=bandchain_params.get("request_id", None),
+                            data_source_id=bandchain_params.get("data_source_id", None),
+                            external_id=bandchain_params.get("external_id", None),
+                            cached_data=False,
+                            verify=request.state.verify.to_dict(),
+                            provider_response=ProviderResponse(
+                                response_code=res.status_code, error_msg=error_msg
+                            ).to_dict(),
+                        )
                     )
-                )
 
-            else:
-                request = kwargs.get("request")
-                client_ip = request.client.host
-                bandchain_params = get_bandchain_params_with_type(request.headers)
-
-                self.db.save_report(
-                    Report(
-                        user_ip=client_ip,
-                        reporter_address=bandchain_params.get("reporter", None),
-                        validator_address=bandchain_params.get("validator", None),
-                        request_id=bandchain_params.get("request_id", None),
-                        data_source_id=bandchain_params.get("data_source_id", None),
-                        external_id=bandchain_params.get("external_id", None),
-                        cached_data=res.get("cached_data", False),
-                        verify=request.state.verify.to_dict(),
-                        provider_response=ProviderResponse(response_code=200).to_dict(),
+                else:
+                    self.db.save_report(
+                        Report(
+                            user_ip=client_ip,
+                            reporter_address=bandchain_params.get("reporter", None),
+                            validator_address=bandchain_params.get("validator", None),
+                            request_id=bandchain_params.get("request_id", None),
+                            data_source_id=bandchain_params.get("data_source_id", None),
+                            external_id=bandchain_params.get("external_id", None),
+                            cached_data=res.get("cached_data", False),
+                            verify=request.state.verify.to_dict(),
+                            provider_response=ProviderResponse(response_code=200).to_dict(),
+                        )
                     )
-                )
 
             return res
 
