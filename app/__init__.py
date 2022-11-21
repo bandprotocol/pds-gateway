@@ -35,11 +35,11 @@ def create_app(config):
 
         app.state.adaptor = helper.get_adapter(config.ADAPTER_TYPE, config.ADAPTER_NAME)
 
-    init_db()
-    init_adaptor()
-
     # init cache memory
     app.state.cache_data = cache.Cache(config.CACHE_SIZE, timeparse(config.TTL_TIME))
+
+    init_db()
+    init_adaptor()
 
     @app.middleware("http")
     @CollectVerifyData(db=app.state.db)
