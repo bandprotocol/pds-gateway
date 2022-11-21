@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 
 from motor import motor_asyncio
 
+import certifi
+
 
 class Verify(BaseModel):
     response_code: int = Field(...)
@@ -41,7 +43,8 @@ class Report(BaseModel):
 
 class DB:
     def __init__(self, mongo_db_url: str, db_name: str):
-        self.report = motor_asyncio.AsyncIOMotorClient(mongo_db_url)[db_name].get_collection("report")
+        ca = certifi.where()
+        self.report = motor_asyncio.AsyncIOMotorClient(mongo_db_url, tlsCAFile=ca)[db_name].get_collection("report")
 
     async def get_latest_request_info(self):
         cursor = self.report.find({}, {"_id": 0, "user_ip": 0}).sort("created_at", -1).limit(1)
