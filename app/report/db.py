@@ -1,10 +1,9 @@
+import certifi
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field
 
 from motor import motor_asyncio
-
-import certifi
 
 
 class Verify(BaseModel):
