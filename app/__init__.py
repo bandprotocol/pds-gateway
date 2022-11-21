@@ -33,7 +33,7 @@ def create_app(config):
         if config.ADAPTER_NAME is None:
             raise Exception("MISSING 'ADAPTER_NAME' ENV")
 
-        app.state.adaptor = helper.get_adapter(config.ADAPTER_TYPE, config.ADAPTER_NAME)
+        app.state.adapter = helper.get_adapter(config.ADAPTER_TYPE, config.ADAPTER_NAME)
 
     # init cache memory
     app.state.cache_data = cache.Cache(config.CACHE_SIZE, timeparse(config.TTL_TIME))
@@ -94,7 +94,7 @@ def create_app(config):
                 return latest_data
 
         try:
-            output = await app.state.adaptor.unified_call(request)
+            output = await app.state.adapter.unified_call(request)
             if config.MODE == "production":
                 # cache data
                 app.state.cache_data.set_data(helper.get_band_signature_hash(request.headers), output)
