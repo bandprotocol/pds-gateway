@@ -17,7 +17,13 @@ class CollectVerifyData:
         async def wrapper_collect_verify_data(*args, **kwargs):
             res = await func(*args, **kwargs)
 
-            if type(res) == JSONResponse and res.status_code != 200 and self.db:
+            request_path = ""
+            for arg in args:
+                if isinstance(arg, Request):
+                    request_path = arg.url.path
+                    break
+
+            if request_path != "/status" and type(res) == JSONResponse and res.status_code != 200 and self.db:
                 request = [arg for arg in args if isinstance(arg, Request)][0]
                 client_ip = request.client.host
                 bandchain_params = get_bandchain_params_with_type(request.headers)
