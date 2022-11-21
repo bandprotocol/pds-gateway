@@ -59,7 +59,7 @@ def create_app(config):
                 return await call_next(request=request)
 
             else:
-                request.state.verify = Verify(response_code=200, is_delay=True)
+                request.state.verify = Verify(response_code=200, is_delay=False)
                 return await call_next(request=request)
 
         except UnsupportedDsException as e:
