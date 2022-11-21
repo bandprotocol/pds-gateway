@@ -48,6 +48,10 @@ class DB:
     async def get_latest_request_info(self):
         cursor = self.report.find({}, {"_id": 0, "user_ip": 0}).sort("created_at", -1).limit(1)
         latest_request_info = await cursor.to_list(length=1)
+
+        if len(latest_request_info) == 0:
+            return {}
+
         return latest_request_info[0]
 
     async def get_latest_verify_failed(self):
@@ -60,6 +64,10 @@ class DB:
             .limit(1)
         )
         latest_request_info = await cursor.to_list(length=1)
+
+        if len(latest_request_info) == 0:
+            return {}
+
         return latest_request_info[0]
 
     def save_report(self, report: Report):
