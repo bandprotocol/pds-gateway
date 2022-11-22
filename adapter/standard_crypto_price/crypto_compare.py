@@ -1,4 +1,4 @@
-from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
+from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
 from typing import Dict
 from datetime import datetime
 import httpx

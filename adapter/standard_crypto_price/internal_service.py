@@ -1,5 +1,5 @@
 from datetime import datetime
-from app.adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
+from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
 import httpx
 import os
 

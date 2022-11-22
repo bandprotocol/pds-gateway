@@ -1,12 +1,11 @@
 from genericpath import isdir
-from sanic import Sanic
-from app.utils import helper
-from app import create_app
 from os import listdir
 from os.path import isfile, join
 from pytest_httpx import HTTPXMock
 import httpx
 import pytest
+
+from app.utils import helper
 
 
 class MockConfig:
@@ -26,11 +25,6 @@ mock_headers = {
     "BAND_REPORTER": "bandcoolreporter",
     "BAND_SIGNATURE": "coolsignature",
 }
-
-app = create_app(
-    "test",
-    MockConfig,
-)
 
 
 def test_get_bandchain_params():
@@ -57,6 +51,7 @@ def test_add_params_config():
             "reporter": "bandcoolreporter",
             "signature": "coolsignature",
         },
+        10,
     )
 
     assert params == {
@@ -66,12 +61,12 @@ def test_add_params_config():
         "request_id": "1",
         "reporter": "bandcoolreporter",
         "signature": "coolsignature",
-        "max_delay": "5",
+        "max_delay": "10",
     }
 
 
 def test_get_adapter():
-    path = "./app/adapter"
+    path = "./adapter"
     standards = [f for f in listdir(path) if isdir(join(path, f)) and not f.startswith("__")]
     for standard in standards:
         adapters = [
@@ -85,17 +80,13 @@ def test_get_adapter():
 
 
 def test_verify_data_source_id_success():
-    app = Sanic.get_app()
-    app.update_config({"MODE": "development", "ALLOWED_DATA_SOURCE_IDS": ["1", "2"]})
-    result = helper.verify_data_source_id("1")
+    result = helper.verify_data_source_id("1", ["1", "2"])
     assert result == True
 
 
 def test_verify_data_source_id_fail():
-    app = Sanic.get_app()
-    app.update_config({"MODE": "development", "ALLOWED_DATA_SOURCE_IDS": ["1", "2"]})
     try:
-        result = helper.verify_data_source_id("3")
+        result = helper.verify_data_source_id("3", ["1", "2"])
         assert result == False
     except:
         pass
@@ -118,7 +109,7 @@ async def test_verify_request_success(httpx_mock: HTTPXMock):
 
     httpx_mock.add_callback(custom_response)
 
-    data_source_id = await helper.verify_request(mock_headers)
+    data_source_id = await helper.verify_request(mock_headers, "MOCK_URL", "0")
     assert data_source_id == "226"
 
 
@@ -134,6 +125,6 @@ async def test_verify_request_failed(httpx_mock: HTTPXMock):
     httpx_mock.add_callback(custom_response)
 
     try:
-        await helper.verify_request(mock_headers)
+        await helper.verify_request(mock_headers, "MOCK_URL", "0")
     except Exception as e:
         assert str(e) == "server error"

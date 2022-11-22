@@ -3,13 +3,11 @@ from httpx import HTTPStatusError
 from pytimeparse.timeparse import timeparse
 from fastapi.responses import JSONResponse
 
-from app.adapter import init_adapter
+from adapter import init_adapter
 from app.config import Config
-
 from app.report import init_db
 from app.report.middlewares import CollectVerifyData, CollectRequestData, GetStatus
 from app.report.models import Verify
-
 from app.utils.types import VerifyErrorType
 from app.utils import helper, cache
 from app.utils.exception import UnsupportedDsException
@@ -18,7 +16,6 @@ app = FastAPI()
 config = Config()
 
 print(f"GATEWAY_MODE: {config.MODE}")
-
 
 # init cache memory
 app.state.cache_data = cache.Cache(config.CACHE_SIZE, timeparse(config.TTL_TIME))

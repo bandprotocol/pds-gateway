@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Union
 from importlib import import_module
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -31,23 +31,25 @@ def get_band_signature_hash(headers: Dict[str, str]) -> str:
     return hash(headers["BAND_SIGNATURE"])
 
 
-def add_params_config(params: Dict[str, str], max_delay_verification: str) -> Dict[str, str]:
-    params["max_delay"] = max_delay_verification
+def add_params_config(params: Dict[str, str], max_delay_verification: Union[int, str]) -> Dict[str, str]:
+    params["max_delay"] = str(max_delay_verification)
     return params
 
 
 def get_adapter(type: str, name: str):
-    module = import_module(f"app.adapter.{type}.{name}".lower())
+    module = import_module(f"adapter.{type}.{name}".lower())
     AdapterClass = getattr(module, "".join([part.capitalize() for part in name.split("_")]))
     return AdapterClass()
 
 
-async def verify_request(headers: Dict[str, str], verify_request_url: str, max_delay_verification: str) -> dict:
+async def verify_request(
+    headers: Dict[str, str], verify_request_url: str, max_delay_verification: Union[int, str]
+) -> dict:
     client = httpx.AsyncClient()
 
     res = await client.get(
         url=verify_request_url,
-        params=add_params_config(get_bandchain_params(headers), max_delay_verification),
+        params=add_params_config(get_bandchain_params(headers), str(max_delay_verification)),
     )
 
     # check result of request
