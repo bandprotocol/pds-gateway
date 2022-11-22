@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from fastapi import Request
+from app.utils import helper
 
 
 class Adapter(ABC):
@@ -24,3 +25,13 @@ class Adapter(ABC):
         output = await self.call(input)
         self.verify_output(input, output)
         return self.phrase_output(output)
+
+
+def init_adapter(adapter_type: str, adapter_name: str) -> Adapter:
+    # check adapter configuration
+    if not adapter_type:
+        raise Exception("MISSING 'ADAPTER_TYPE' ENV")
+    if not adapter_name:
+        raise Exception("MISSING 'ADAPTER_NAME' ENV")
+
+    return helper.get_adapter(adapter_type, adapter_name)
