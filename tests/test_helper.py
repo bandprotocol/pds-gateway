@@ -94,6 +94,8 @@ def test_verify_data_source_id_fail():
 
 @pytest.mark.asyncio
 async def test_verify_request_success(httpx_mock: HTTPXMock):
+    expected = {"is_delay": False, "data_source_id": "226"}
+
     # mock response
     def custom_response(_: httpx.Request):
         return httpx.Response(
@@ -104,13 +106,15 @@ async def test_verify_request_success(httpx_mock: HTTPXMock):
                 "request_id": "2728447",
                 "external_id": "2",
                 "data_source_id": "226",
+                "is_delay": False,
             },
         )
 
     httpx_mock.add_callback(custom_response)
 
-    data_source_id = await helper.verify_request(mock_headers, "MOCK_URL", "0")
-    assert data_source_id == "226"
+    verified = await helper.verify_request(mock_headers, "http://www.mock-url.com", "0")
+
+    assert verified == expected
 
 
 @pytest.mark.asyncio
@@ -125,6 +129,6 @@ async def test_verify_request_failed(httpx_mock: HTTPXMock):
     httpx_mock.add_callback(custom_response)
 
     try:
-        await helper.verify_request(mock_headers, "MOCK_URL", "0")
-    except Exception as e:
-        assert str(e) == "server error"
+        await helper.verify_request(mock_headers, "http://www.mock-url.com", "0")
+    except httpx.HTTPStatusError as e:
+        assert e.response.status_code == 500
