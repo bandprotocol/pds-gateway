@@ -4,6 +4,7 @@ import functools
 from fastapi.responses import JSONResponse
 from fastapi import Request, HTTPException
 
+from app import config
 from app.utils.helper import get_bandchain_params_with_type
 from app.report.db import DB
 from app.report.models import Report, Verify, ProviderResponse
@@ -105,8 +106,8 @@ class CollectRequestData:
 
 
 class GetStatus:
-    def __init__(self, config, db: DB = None):
-        self.config = config
+    def __init__(self, settings: config.Settings, db: DB = None):
+        self.settings = settings
         self.db = db
 
     def __call__(self, func):
@@ -119,8 +120,8 @@ class GetStatus:
                     latest_failed_request = await self.db.get_latest_verify_failed()
                     res_dict = {
                         "gateway_info": {
-                            "allow_data_source_ids": self.config.ALLOWED_DATA_SOURCE_IDS,
-                            "max_delay_verification": self.config.MAX_DELAY_VERIFICATION,
+                            "allow_data_source_ids": self.settings.ALLOWED_DATA_SOURCE_IDS,
+                            "max_delay_verification": self.settings.MAX_DELAY_VERIFICATION,
                         },
                         "latest_request": latest_request,
                         "latest_failed_request": latest_failed_request,

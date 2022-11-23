@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request
+from functools import lru_cache
+from fastapi import Depends, FastAPI, Request
 from httpx import HTTPStatusError
 from pytimeparse.timeparse import timeparse
 from fastapi.responses import JSONResponse
 
 from adapter import init_adapter
-from app.config import Config
+from app import config
 from app.report import init_db
 from app.report.middlewares import CollectVerifyData, CollectRequestData, GetStatus
 from app.report.models import Verify
@@ -13,29 +14,35 @@ from app.utils import helper, cache
 from app.utils.exception import UnsupportedDsException
 
 app = FastAPI()
-config = Config()
 
-print(f"GATEWAY_MODE: {config.MODE}")
+
+@lru_cache()
+def get_settings():
+    return config.Settings()
+
+
+settings = get_settings()
+print(f"GATEWAY_MODE: {settings.MODE}")
 
 # init cache memory
-app.state.cache_data = cache.Cache(config.CACHE_SIZE, timeparse(config.TTL_TIME))
-app.state.db = init_db(config.MONGO_DB_URL, config.COLLECTION_DB_NAME)
-app.state.adapter = init_adapter(config.ADAPTER_TYPE, config.ADAPTER_NAME)
+app.state.cache_data = cache.Cache(settings.CACHE_SIZE, timeparse(settings.TTL_TIME))
+app.state.db = init_db(settings.MONGO_DB_URL, settings.COLLECTION_DB_NAME)
+app.state.adapter = init_adapter(settings.ADAPTER_TYPE, settings.ADAPTER_NAME)
 
 
 @app.middleware("http")
 @CollectVerifyData(db=app.state.db)
-async def verify(request: Request, call_next):
+async def verify(request: Request, call_next, settings: config.Settings = settings):
     try:
-        if config.MODE == "production" and request.url.path != "/status":
+        if settings.MODE == "production" and request.url.path != "/status":
             # pass verify if already cache
             if app.state.cache_data.get_data(helper.get_band_signature_hash(request.headers)):
                 return await call_next(request)
 
             verified = await helper.verify_request(
-                request.headers, config.VERIFY_REQUEST_URL, config.MAX_DELAY_VERIFICATION
+                request.headers, settings.VERIFY_REQUEST_URL, settings.MAX_DELAY_VERIFICATION
             )
-            helper.verify_data_source_id(verified["data_source_id"], config.ALLOWED_DATA_SOURCE_IDS.split(","))
+            helper.verify_data_source_id(verified["data_source_id"], settings.ALLOWED_DATA_SOURCE_IDS.split(","))
             request.state.verify = Verify(response_code=200, is_delay=verified["is_delay"])
 
             return await call_next(request=request)
@@ -68,8 +75,8 @@ async def verify(request: Request, call_next):
 
 @app.get("/")
 @CollectRequestData(db=app.state.db)
-async def request(request: Request):
-    if config.MODE == "production":
+async def request(request: Request, settings: config.Settings = Depends(get_settings)):
+    if settings.MODE == "production":
         # get cache data
         latest_data = app.state.cache_data.get_data(helper.get_band_signature_hash(request.headers))
         if latest_data:
@@ -78,7 +85,7 @@ async def request(request: Request):
 
     try:
         output = await app.state.adapter.unified_call(request)
-        if config.MODE == "production":
+        if settings.MODE == "production":
             # cache data
             app.state.cache_data.set_data(helper.get_band_signature_hash(request.headers), output)
 
@@ -97,6 +104,6 @@ async def request(request: Request):
 
 
 @app.get("/status")
-@GetStatus(config, app.state.db)
+@GetStatus(settings, app.state.db)
 def get_report_status(request: Request):
     return {}
