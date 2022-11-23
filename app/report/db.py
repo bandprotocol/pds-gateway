@@ -1,4 +1,3 @@
-import certifi
 from motor import motor_asyncio
 
 from app.report.models import Report
@@ -6,8 +5,7 @@ from app.report.models import Report
 
 class DB:
     def __init__(self, mongo_db_url: str, db_name: str):
-        ca = certifi.where()
-        self.report = motor_asyncio.AsyncIOMotorClient(mongo_db_url, tlsCAFile=ca)[db_name].get_collection("report")
+        self.report = motor_asyncio.AsyncIOMotorClient(mongo_db_url)[db_name].get_collection("report")
 
     async def get_latest_request_info(self):
         cursor = self.report.find({}, {"_id": 0, "user_ip": 0}).sort("created_at", -1).limit(1)
