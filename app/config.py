@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     ADAPTER_TYPE: str
     ADAPTER_NAME: str
 
-    MONGO_DB_URL: str
-    COLLECTION_DB_NAME: str
+    MONGO_DB_URL: str = None
+    COLLECTION_DB_NAME: str = None
 
     class Config:
         env_file = ".env"
