@@ -13,10 +13,9 @@ from app.report.models import Verify
 from app.utils.types import VerifyErrorType
 from app.utils import helper, cache
 from app.utils.exception import UnsupportedDsException
+from app.utils.log_config import init_loggers
 
 app = FastAPI()
-
-log = logging.getLogger("gunicorn.error")
 
 
 @lru_cache()
@@ -25,9 +24,15 @@ def get_settings():
 
 
 settings = get_settings()
+
+# create logger
+init_loggers(log_level=settings.LOG_LEVEL)
+log = logging.getLogger("pds_gateway_log")
+
+
 log.info(f"GATEWAY_MODE: {settings.MODE}")
 
-# init cache memory
+
 app.state.cache_data = cache.Cache(settings.CACHE_SIZE, timeparse(settings.TTL_TIME))
 app.state.db = init_db(settings.MONGO_DB_URL, settings.COLLECTION_DB_NAME, log)
 app.state.adapter = init_adapter(settings.ADAPTER_TYPE, settings.ADAPTER_NAME)

@@ -3,6 +3,7 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
     MODE: str = "development"
+    LOG_LEVEL: str = "INFO"
     # VERIFICATION
     VERIFY_REQUEST_URL: str
     ALLOWED_DATA_SOURCE_IDS: str
