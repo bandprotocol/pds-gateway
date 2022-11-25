@@ -2,7 +2,6 @@ import functools
 
 from fastapi import HTTPException
 
-from app import config
 from app.utils.helper import get_bandchain_params_with_type
 from app.report.db import DB
 from app.report.models import Report, Verify, ProviderResponse

@@ -1,11 +1,9 @@
-import imp
 import logging
 from functools import lru_cache
 from fastapi import Depends, FastAPI, Request
 from httpx import HTTPStatusError
 from pytimeparse.timeparse import timeparse
 from fastapi import HTTPException
-from fastapi.responses import JSONResponse
 
 from adapter import init_adapter
 from app import config
