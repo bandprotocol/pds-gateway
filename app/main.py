@@ -55,8 +55,7 @@ async def verify(request: Request, settings: config.Settings = settings):
 
             return Verify(response_code=200, is_delay=verified["is_delay"])
 
-        else:
-            return Verify(response_code=200, is_delay=False)
+        return Verify(response_code=200, is_delay=False)
 
     except UnsupportedDsException as e:
         raise HTTPException(
