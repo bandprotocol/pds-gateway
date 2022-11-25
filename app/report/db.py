@@ -33,5 +33,4 @@ class DB:
         return latest_request_info[0]
 
     def save_report(self, report: Report):
-        print(report.to_dict())
         self.report.insert_one(report.to_dict())
