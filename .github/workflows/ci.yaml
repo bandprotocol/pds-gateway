@@ -1,0 +1,26 @@
+name: Run Tests
+on: pull_request
+
+jobs:
+  test-pds-gateway:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Use python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11"
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Test Price Cacher
+        run: |-
+          RUN pip3 install poetry
+          RUN poetry config virtualenvs.create false
+          RUN poetry install --no-root
+          poetry run pytest
+        working-directory: .
