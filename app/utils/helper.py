@@ -1,7 +1,5 @@
 from typing import Dict, List, Union
 from importlib import import_module
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
 import httpx
 
 from app.utils.exception import UnsupportedDsException
@@ -69,17 +67,3 @@ def verify_data_source_id(data_source_id: str, allowed_data_source_ids: List[str
         raise UnsupportedDsException(allowed_data_source_ids=allowed_data_source_ids, data_source_id=data_source_id)
 
     return True
-
-
-def json_verify_error_response(status_code: int, verify_error_type: VerifyErrorType, msg: str):
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "error_response": jsonable_encoder(
-                ErrorResponse(
-                    verify_error_type=verify_error_type.value,
-                    msg=msg,
-                )
-            )
-        },
-    )
