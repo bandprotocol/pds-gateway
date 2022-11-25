@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from adapter import init_adapter
 from app import config
 from app.report import init_db
-from app.report.middlewares import CollectVerifyData, CollectRequestData, GetStatus
+from app.report.middlewares import CollectVerifyData, CollectRequestData
 from app.report.models import Verify
 from app.utils.types import VerifyErrorType
 from app.utils import helper, cache
@@ -112,6 +112,21 @@ async def request(
 
 
 @app.get("/status")
-@GetStatus(settings, app.state.db)
-def get_report_status(request: Request):
-    return {}
+async def get_report_status(settings: config.Settings = Depends(get_settings)):
+    res = {
+        "gateway_info": {
+            "allow_data_source_ids": settings.ALLOWED_DATA_SOURCE_IDS,
+            "max_delay_verification": settings.MAX_DELAY_VERIFICATION,
+        }
+    }
+
+    if app.state.db:
+        try:
+            res["latest_request"] = await app.state.db.get_latest_request_info()
+            res["latest_failed_request"] = await app.state.db.get_latest_verify_failed()
+
+            return res
+        except Exception as e:
+            raise HTTPException(f"{e}", status_code=500)
+
+    return res

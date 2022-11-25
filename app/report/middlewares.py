@@ -1,8 +1,6 @@
-import json
 import functools
 
-from fastapi.responses import JSONResponse
-from fastapi import Request, HTTPException
+from fastapi import HTTPException
 
 from app import config
 from app.utils.helper import get_bandchain_params_with_type
@@ -109,33 +107,3 @@ class CollectRequestData:
             return res
 
         return wrapper_collect_request_data
-
-
-class GetStatus:
-    def __init__(self, settings: config.Settings, db: DB = None):
-        self.settings = settings
-        self.db = db
-
-    def __call__(self, func):
-        @functools.wraps(func)
-        async def wrapper_get_status(*args, **kwargs):
-            res = func(*args, **kwargs)
-            if self.db:
-                try:
-                    latest_request = await self.db.get_latest_request_info()
-                    latest_failed_request = await self.db.get_latest_verify_failed()
-                    res_dict = {
-                        "gateway_info": {
-                            "allow_data_source_ids": self.settings.ALLOWED_DATA_SOURCE_IDS,
-                            "max_delay_verification": self.settings.MAX_DELAY_VERIFICATION,
-                        },
-                        "latest_request": latest_request,
-                        "latest_failed_request": latest_failed_request,
-                    }
-
-                    res = res_dict
-                except Exception as e:
-                    raise HTTPException(f"{e}", status_code=500)
-            return res
-
-        return wrapper_get_status
