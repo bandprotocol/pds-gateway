@@ -1,8 +1,10 @@
+import imp
 import logging
 from functools import lru_cache
 from fastapi import Depends, FastAPI, Request
 from httpx import HTTPStatusError
 from pytimeparse.timeparse import timeparse
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 
 from adapter import init_adapter
@@ -38,52 +40,50 @@ app.state.db = init_db(settings.MONGO_DB_URL, settings.COLLECTION_DB_NAME, log)
 app.state.adapter = init_adapter(settings.ADAPTER_TYPE, settings.ADAPTER_NAME)
 
 
-@app.middleware("http")
 @CollectVerifyData(db=app.state.db)
-async def verify(request: Request, call_next, settings: config.Settings = settings):
+async def verify(request: Request, settings: config.Settings = settings):
     try:
-        if settings.MODE == "production" and request.url.path != "/status":
+        if settings.MODE == "production":
             # pass verify if already cache
             if app.state.cache_data.get_data(helper.get_band_signature_hash(request.headers)):
-                return await call_next(request)
+                return Verify(response_code=200, is_delay=False)
 
             verified = await helper.verify_request(
                 request.headers, settings.VERIFY_REQUEST_URL, settings.MAX_DELAY_VERIFICATION
             )
             helper.verify_data_source_id(verified["data_source_id"], settings.ALLOWED_DATA_SOURCE_IDS.split(","))
-            request.state.verify = Verify(response_code=200, is_delay=verified["is_delay"])
 
-            return await call_next(request=request)
+            return Verify(response_code=200, is_delay=verified["is_delay"])
 
         else:
-            request.state.verify = Verify(response_code=200, is_delay=False)
-            return await call_next(request=request)
+            return Verify(response_code=200, is_delay=False)
 
     except UnsupportedDsException as e:
-        return helper.json_verify_error_response(
-            401,
-            VerifyErrorType.UNSUPPORTED_DS_ID,
-            f"wrong data_source_id. expected {e.allowed_data_source_ids}, got {e.data_source_id}.",
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "verify_error_type": VerifyErrorType.UNSUPPORTED_DS_ID.value,
+                "error_msg": f"wrong data_source_id. expected {e.allowed_data_source_ids}, got {e.data_source_id}.",
+            },
         )
 
     except HTTPStatusError as e:
-        return helper.json_verify_error_response(
-            e.response.status_code,
-            VerifyErrorType.FAILED_VERIFICATION,
-            f"{e}",
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail={"verify_error_type": VerifyErrorType.FAILED_VERIFICATION.value, "error_msg": f"{e}"},
         )
 
     except Exception as e:
-        return helper.json_verify_error_response(
-            500,
-            VerifyErrorType.SERVER_ERROR,
-            f"{e}",
+        raise HTTPException(
+            status_code=500, detail={"verify_error_type": VerifyErrorType.SERVER_ERROR.value, "error_msg": f"{e}"}
         )
 
 
 @app.get("/")
 @CollectRequestData(db=app.state.db)
-async def request(request: Request, settings: config.Settings = Depends(get_settings)):
+async def request(
+    request: Request, settings: config.Settings = Depends(get_settings), verify: Verify = Depends(verify)
+):
     if settings.MODE == "production":
         # get cache data
         latest_data = app.state.cache_data.get_data(helper.get_band_signature_hash(request.headers))
@@ -100,14 +100,15 @@ async def request(request: Request, settings: config.Settings = Depends(get_sett
         return output
 
     except HTTPStatusError as e:
-        return JSONResponse(
+        raise HTTPException(
             status_code=e.response.status_code,
-            content={"error_msg": f"{e}"},
+            detail={"error_msg": f"{e}"},
         )
+
     except Exception as e:
-        return JSONResponse(
+        raise HTTPException(
             status_code=500,
-            content={"error_msg": f"{e}"},
+            detail={"error_msg": f"{e}"},
         )
 
 

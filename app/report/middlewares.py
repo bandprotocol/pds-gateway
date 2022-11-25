@@ -17,35 +17,34 @@ class CollectVerifyData:
     def __call__(self, func):
         @functools.wraps(func)
         async def wrapper_collect_verify_data(*args, **kwargs):
-            res = await func(*args, **kwargs)
 
-            request_path = ""
-            for arg in args:
-                if isinstance(arg, Request):
-                    request_path = arg.url.path
-                    break
+            try:
+                res = await func(*args, **kwargs)
 
-            if request_path != "/status" and type(res) == JSONResponse and res.status_code != 200 and self.db:
-                request = [arg for arg in args if isinstance(arg, Request)][0]
-                client_ip = request.client.host
-                bandchain_params = get_bandchain_params_with_type(request.headers)
-                error_response = json.loads(res.body)["error_response"]
+            except HTTPException as e:
+                if self.db:
+                    request = kwargs.get("request")
 
-                self.db.save_report(
-                    Report(
-                        user_ip=client_ip,
-                        reporter_address=bandchain_params.get("reporter", None),
-                        validator_address=bandchain_params.get("validator", None),
-                        request_id=bandchain_params.get("request_id", None),
-                        data_source_id=bandchain_params.get("data_source_id", None),
-                        external_id=bandchain_params.get("external_id", None),
-                        verify=Verify(
-                            response_code=res.status_code,
-                            error_type=error_response["verify_error_type"],
-                            error_msg=error_response["msg"],
-                        ).to_dict(),
+                    client_ip = request.client.host
+                    bandchain_params = get_bandchain_params_with_type(request.headers)
+
+                    self.db.save_report(
+                        Report(
+                            user_ip=client_ip,
+                            reporter_address=bandchain_params.get("reporter", None),
+                            validator_address=bandchain_params.get("validator", None),
+                            request_id=bandchain_params.get("request_id", None),
+                            data_source_id=bandchain_params.get("data_source_id", None),
+                            external_id=bandchain_params.get("external_id", None),
+                            verify=Verify(
+                                response_code=e.status_code,
+                                error_type=e.detail["verify_error_type"],
+                                error_msg=e.detail["error_msg"],
+                            ).to_dict(),
+                        )
                     )
-                )
+
+                raise e
 
             return res
 
@@ -59,15 +58,35 @@ class CollectRequestData:
     def __call__(self, func):
         @functools.wraps(func)
         async def wrapper_collect_request_data(*args, **kwargs):
-            res = await func(*args, **kwargs)
+            try:
+                res = await func(*args, **kwargs)
 
-            if self.db:
-                request = kwargs.get("request")
-                client_ip = request.client.host
-                bandchain_params = get_bandchain_params_with_type(request.headers)
+                if self.db:
+                    request = kwargs.get("request")
+                    verify = kwargs.get("verify")
+                    client_ip = request.client.host
+                    bandchain_params = get_bandchain_params_with_type(request.headers)
 
-                if type(res) == JSONResponse and res.status_code != 200:
-                    error_msg = json.loads(res.body)["error_msg"]
+                    self.db.save_report(
+                        Report(
+                            user_ip=client_ip,
+                            reporter_address=bandchain_params.get("reporter", None),
+                            validator_address=bandchain_params.get("validator", None),
+                            request_id=bandchain_params.get("request_id", None),
+                            data_source_id=bandchain_params.get("data_source_id", None),
+                            external_id=bandchain_params.get("external_id", None),
+                            cached_data=res.get("cached_data", False),
+                            verify=verify.to_dict(),
+                            provider_response=ProviderResponse(response_code=200).to_dict(),
+                        )
+                    )
+
+            except HTTPException as e:
+                if self.db:
+                    request = kwargs.get("request")
+                    verify = kwargs.get("verify")
+                    client_ip = request.client.host
+                    bandchain_params = get_bandchain_params_with_type(request.headers)
 
                     self.db.save_report(
                         Report(
@@ -78,27 +97,14 @@ class CollectRequestData:
                             data_source_id=bandchain_params.get("data_source_id", None),
                             external_id=bandchain_params.get("external_id", None),
                             cached_data=False,
-                            verify=request.state.verify.to_dict(),
+                            verify=verify.to_dict(),
                             provider_response=ProviderResponse(
-                                response_code=res.status_code, error_msg=error_msg
+                                response_code=e.status_code, error_msg=e.detail["error_msg"]
                             ).to_dict(),
                         )
                     )
 
-                else:
-                    self.db.save_report(
-                        Report(
-                            user_ip=client_ip,
-                            reporter_address=bandchain_params.get("reporter", None),
-                            validator_address=bandchain_params.get("validator", None),
-                            request_id=bandchain_params.get("request_id", None),
-                            data_source_id=bandchain_params.get("data_source_id", None),
-                            external_id=bandchain_params.get("external_id", None),
-                            cached_data=res.get("cached_data", False),
-                            verify=request.state.verify.to_dict(),
-                            provider_response=ProviderResponse(response_code=200).to_dict(),
-                        )
-                    )
+                raise e
 
             return res
 
