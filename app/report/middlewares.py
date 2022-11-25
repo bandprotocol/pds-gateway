@@ -14,7 +14,6 @@ class CollectVerifyData:
     def __call__(self, func):
         @functools.wraps(func)
         async def wrapper_collect_verify_data(*args, **kwargs):
-
             try:
                 res = await func(*args, **kwargs)
 
