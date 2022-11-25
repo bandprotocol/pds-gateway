@@ -3,7 +3,6 @@ from importlib import import_module
 import httpx
 
 from app.utils.exception import UnsupportedDsException
-from app.utils.types import VerifyErrorType, ErrorResponse
 
 
 def get_bandchain_params(headers: Dict[str, str]) -> Dict[str, str]:
