@@ -1,7 +1,7 @@
-from datetime import datetime
-from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
 import httpx
 import os
+
+from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
 
 
 class InternalService(StandardCryptoPrice):

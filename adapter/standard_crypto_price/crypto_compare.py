@@ -1,8 +1,10 @@
-from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
-from typing import Dict
-from datetime import datetime
 import httpx
 import os
+from typing import Dict
+from datetime import datetime
+
+
+from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
 
 
 class CryptoCompare(StandardCryptoPrice):

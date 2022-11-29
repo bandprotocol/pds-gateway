@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from adapter import Adapter
-from typing import TypedDict, List
+from typing import TypedDict, List, Dict
 
 
 class Price(TypedDict):
@@ -26,7 +26,7 @@ class Response(TypedDict):
 
 
 class StandardCryptoPrice(Adapter):
-    def phrase_input(self, request: Request) -> Input:
+    def phrase_input(self, request: Dict) -> Input:
         symbols = [symbol.strip() for symbol in request.get("symbols", "").split(",")]
         return Input(symbols=symbols)
 
