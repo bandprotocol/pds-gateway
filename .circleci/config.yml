@@ -22,10 +22,9 @@ jobs:
       executor: gcp-cli/default
       steps:
       - gcp-cli/setup:
-          version: 404.0.0
       - run: |
-          gcloud auth application-default print-access-token | \
-          gcloud auth activate-service-account --key-file=-
+          echo $GCLOUD_SERVICE_KEY | base64 --decode -i > ${HOME}/gcloud-service-key.json
+          gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
       - run: |
           gcloud --quiet run deploy my-service \
             --image gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} \
