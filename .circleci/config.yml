@@ -17,6 +17,10 @@ jobs:
           version: 20.10.18
       - run: |
           docker build -t gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} .
+
+  deploy:
+      executor: gcp-cli/default
+      steps:
       - gcp-cli/install
       - gcp-cli/initialize
       - run: |
@@ -34,3 +38,6 @@ workflows:
   build-and-deploy:
     jobs:
       - build
+      - deploy:
+            requires:
+              - build
