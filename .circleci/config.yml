@@ -1,0 +1,26 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: cimg/python:3.11.1
+    working_directory: /app
+    steps:
+      - checkout
+      - run: pip install poetry
+      - run: poetry install
+      - run: poetry run pytest
+      - run: |
+          docker build -t gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} .
+      - run: |
+          gcloud auth application-default print-access-token | \
+          gcloud auth activate-service-account --key-file=-
+      - run: |
+          gcloud --quiet run deploy my-service \
+            --image gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} \
+            --region ${GOOGLE_CLOUD_REGION} \
+            --platform managed \
+            --allow-unauthenticated
+
+workflows:
+  version: 2
