@@ -17,6 +17,8 @@ jobs:
           version: 20.10.18
       - run: |
           docker build -t gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} .
+      - gcp-cli/install
+      - gcp-cli/initialize
       - run: |
           gcloud auth application-default print-access-token | \
           gcloud auth activate-service-account --key-file=-
