@@ -7,7 +7,8 @@ jobs:
     steps:
       - checkout
       - run: pip install poetry
-      - run: poetry install
+      - run: poetry config virtualenvs.create false
+      - run: poetry install --no-root
       - run: poetry run pytest
       - run: |
           docker build -t gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} .
