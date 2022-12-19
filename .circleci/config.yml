@@ -23,14 +23,16 @@ jobs:
       steps:
       - gcp-cli/setup:
           version: 404.0.0
-      - command: |
-          echo $GCLOUD_SERVICE_KEY | base64 --decode -i > ${HOME}/gcloud-service-key.json
-          gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
-          gcloud --quiet run deploy my-service \
-            --image gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} \
-            --region ${GOOGLE_CLOUD_REGION} \
-            --platform managed \
-            --allow-unauthenticated
+      - run:
+          name: deploy service
+          command: |
+              echo $GCLOUD_SERVICE_KEY | base64 --decode -i > ${HOME}/gcloud-service-key.json
+              gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
+              gcloud --quiet run deploy my-service \
+                --image gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} \
+                --region ${GOOGLE_CLOUD_REGION} \
+                --platform managed \
+                --allow-unauthenticated
 
 workflows:
   version: 2
