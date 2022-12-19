@@ -10,6 +10,8 @@ jobs:
       - run: poetry config virtualenvs.create false
       - run: poetry install --no-root
       - run: poetry run pytest
+      - setup_remote_docker:
+          version: 20.10.21
       - run: |
           docker build -t gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} .
       - run: |
