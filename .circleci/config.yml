@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  gcp-cli: circleci/gcp-cli@3.0.1
+
 jobs:
   build:
     docker:
