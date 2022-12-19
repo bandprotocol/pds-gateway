@@ -4,7 +4,6 @@ jobs:
   build:
     docker:
       - image: cimg/python:3.11.1
-    working_directory: /app
     steps:
       - checkout
       - run: pip install poetry
@@ -21,7 +20,6 @@ jobs:
             --region ${GOOGLE_CLOUD_REGION} \
             --platform managed \
             --allow-unauthenticated
-
 
 workflows:
   version: 2
