@@ -44,7 +44,7 @@ jobs:
             gcloud run deploy pds-gateway \
                 --image gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway:latest \
                 --set-env-vars MODE=dev \
-                --set-env-vars ALLOWED_DATA_SOURCE_IDS="236,27" \
+                --set-env-vars ALLOWED_DATA_SOURCE_IDS=236 \
                 --set-env-vars VERIFY_REQUEST_URL=https://laozi-testnet6.bandchain.org/api/oracle/v1/verify_request \
                 --set-env-vars ADAPTER_TYPE=standard_crypto_price \
                 --set-env-vars ADAPTER_NAME=internal_service \
