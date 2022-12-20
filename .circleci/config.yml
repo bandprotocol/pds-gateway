@@ -28,7 +28,7 @@ jobs:
             echo 'export PATH=~$PATH:~/.local/bin' >> $BASH_ENV
             echo ${GCLOUD_SERVICE_KEY} | base64 --decode --ignore-garbage > $HOME/gcloud-service-key.json
             echo 'export GOOGLE_CLOUD_KEYS=$(cat $HOME/gcloud-service-key.json)' >> $BASH_ENV
-            docker build -t gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} .
+            docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/$SERVICE_NAME .
 
       - gcp-gcr/gcr-auth:
           gcloud-service-key: GOOGLE_CLOUD_KEYS
