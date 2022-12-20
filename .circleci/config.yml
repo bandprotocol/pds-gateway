@@ -19,6 +19,7 @@ jobs:
     docker:
       - image: cimg/python:3.11.1
     steps:
+      - checkout
       - run:
           name: Build app binary and Docker image
           command: |
