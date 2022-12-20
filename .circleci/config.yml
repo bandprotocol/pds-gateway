@@ -1,13 +1,13 @@
 version: 2.1
 
 orbs:
-  gcp-gcr: circleci/gcp-gcr@0.15.0
+  gcp-gcr: circleci/gcp-gcr@0.15.1
   cloudrun: circleci/gcp-cloud-run@1.0.2
 
 jobs:
   build_test:
     docker:
-      - image: cimg/python:3.9.16
+      - image: cimg/python:3.11.1
     steps:
       - checkout
       - run: pip install poetry
@@ -17,7 +17,7 @@ jobs:
 
   build_push_image_cloud_run_mangaged:
     docker:
-      - image: cimg/python:3.9.16
+      - image: cimg/python:3.11.1
     steps:
       - checkout
       - setup_remote_docker:
