@@ -1,10 +1,11 @@
 version: 2.1
 
 orbs:
-  gcp-cli: circleci/gcp-cli@3.0.1
+  gcp-gcr: circleci/gcp-gcr@0.6.1
+  cloudrun: circleci/gcp-cloud-run@1.0.0
 
 jobs:
-  build:
+  build_test:
     docker:
       - image: cimg/python:3.11.1
     steps:
@@ -13,32 +14,39 @@ jobs:
       - run: poetry config virtualenvs.create false
       - run: poetry install --no-root
       - run: poetry run pytest
-      - setup_remote_docker:
-          version: 20.10.18
-      - run: |
-          docker build -t gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} .
 
-  deploy:
-      executor: gcp-cli/default
-      steps:
-      - gcp-cli/setup:
-          version: 412.0.0
+  build_push_image_cloud_run_mangaged:
+    docker:
+      - image: cimg/python:3.11.1
+    steps:
       - run:
-          name: deploy service
+          name: Build app binary and Docker image
           command: |
-              echo $GCLOUD_SERVICE_KEY | base64 --decode > ${HOME}/gcloud-service-key.json
-              gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
-              gcloud --quiet run deploy my-service \
-                --image gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} \
-                --region ${GOOGLE_CLOUD_REGION} \
-                --platform managed \
-                --allow-unauthenticated
+            echo 'export PATH=~$PATH:~/.local/bin' >> $BASH_ENV
+            echo ${GCLOUD_SERVICE_KEY} | base64 --decode --ignore-garbage > $HOME/gcloud-service-key.json
+            echo 'export GOOGLE_CLOUD_KEYS=$(cat $HOME/gcloud-service-key.json)' >> $BASH_ENV
+            docker build -t gcr.io/${GOOGLE_CLOUD_PROJECT}/${SERVICE_NAME} .
+
+      - gcp-gcr/gcr-auth:
+          gcloud-service-key: GOOGLE_CLOUD_KEYS
+          google-project-id: GOOGLE_CLOUD_PROJECT
+          google-compute-zone: GOOGLE_CLOUD_REGION
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_CLOUD_PROJECT
+          registry-url: "gcr.io"
+          image: SERVICE_NAME
+      - cloudrun/deploy:
+          platform: "managed"
+          image: "gcr.io/$GOOGLE_CLOUD_PROJECT/$SERVICE_NAME"
+          service-name: "orb-gcp-cloud-run"
+          region: $GOOGLE_CLOUD_REGION
+          unauthenticated: true
 
 workflows:
   version: 2
   build-and-deploy:
     jobs:
-      - build
-      - deploy:
+      - build_test
+      - build_push_image_cloud_run_mangaged:
             requires:
-              - build
+              - build_test
