@@ -1,8 +1,7 @@
 version: 2.1
 
 orbs:
-  gcp-gcr: circleci/gcp-gcr@0.15.1
-  cloudrun: circleci/gcp-cloud-run@1.0.2
+  gcp-gcr: circleci/gcp-cli@3.0.1
 
 jobs:
   build_test:
@@ -29,7 +28,6 @@ jobs:
             echo ${GCLOUD_SERVICE_KEY} | base64 --decode --ignore-garbage > $HOME/gcloud-service-key.json
             echo 'export GOOGLE_CLOUD_KEYS=$(cat $HOME/gcloud-service-key.json)' >> $BASH_ENV
             docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway .
-
       - gcp-gcr/gcr-auth:
           gcloud-service-key: GOOGLE_CLOUD_KEYS
           google-project-id: GOOGLE_CLOUD_PROJECT
@@ -38,12 +36,11 @@ jobs:
           google-project-id: GOOGLE_CLOUD_PROJECT
           registry-url: "gcr.io"
           image: pds-gateway
-      - cloudrun/deploy:
-          platform: "managed"
-          image: "gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway"
-          service-name: pds-gateway
-          region: $GOOGLE_CLOUD_REGION
-          unauthenticated: true
+      - run:
+          name: Deploy to Cloud Run
+          command: |
+            echo $GOOGLE_CLOUD_KEYS | gcloud auth activate-service-account --key-file=-
+            gcloud run deploy pds-gateway --image gcr.io/$GCLOUD_PROJECT/pds-gateway:latest --platform managed --region $GOOGLE_CLOUD_REGION --allow-unauthenticated
 
 workflows:
   version: 2
