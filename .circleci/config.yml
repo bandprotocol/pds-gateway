@@ -42,7 +42,7 @@ jobs:
           platform: "managed"
           image: "gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway"
           service-name: pds-gateway
-          region: GOOGLE_CLOUD_REGION
+          region: $GOOGLE_CLOUD_REGION
           unauthenticated: true
 
 workflows:
