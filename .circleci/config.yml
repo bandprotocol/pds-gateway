@@ -41,7 +41,18 @@ jobs:
           name: Deploy to Cloud Run
           command: |
             echo $GOOGLE_CLOUD_KEYS | gcloud auth activate-service-account --key-file=-
-            gcloud run deploy pds-gateway --image gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway:latest --platform managed --region $GOOGLE_CLOUD_REGION --allow-unauthenticated
+            gcloud run deploy pds-gateway \
+                --image gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway:latest \
+                --platform managed \
+                --region $GOOGLE_CLOUD_REGION \
+                --allow-unauthenticated \
+                --set-env-vars MODE=dev \
+                --set-env-vars ALLOWED_DATA_SOURCE_IDS=236,274 \
+                --set-env-vars VERIFY_REQUEST_URL=https://laozi-testnet6.bandchain.org/api/oracle/v1/verify_request \
+                --set-env-vars ADAPTER_TYPE=standard_crypto_price \
+                --set-env-vars ADAPTER_NAME=internal_service \
+                --set-env-vars API_URL=http://10.148.0.2?source=cmc \
+                --set-env-vars MAX_DELAY_VERIFICATION=5
 
 workflows:
   version: 2
