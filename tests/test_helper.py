@@ -1,12 +1,9 @@
-from genericpath import isdir
-from sanic import Sanic
-from app.utils import helper
-from app import create_app
-from os import listdir
-from os.path import isfile, join
-from pytest_httpx import HTTPXMock
-import httpx
 import pytest
+from httpx import Request, Response
+from fastapi import HTTPException
+from pytest_httpx import HTTPXMock
+
+from app.utils.helper import add_params_config, get_bandchain_params, is_allow_data_source_id, verify_request
 
 
 class MockConfig:
@@ -27,14 +24,9 @@ mock_headers = {
     "BAND_SIGNATURE": "coolsignature",
 }
 
-app = create_app(
-    "test",
-    MockConfig,
-)
-
 
 def test_get_bandchain_params():
-    params = helper.get_bandchain_params(mock_headers)
+    params = get_bandchain_params(mock_headers)
 
     assert params == {
         "chain_id": "bandchain",
@@ -48,7 +40,7 @@ def test_get_bandchain_params():
 
 
 def test_add_params_config():
-    params = helper.add_params_config(
+    params = add_params_config(
         {
             "chain_id": "bandchain",
             "validator": "bandcoolvalidator",
@@ -57,6 +49,7 @@ def test_add_params_config():
             "reporter": "bandcoolreporter",
             "signature": "coolsignature",
         },
+        10,
     )
 
     assert params == {
@@ -66,46 +59,22 @@ def test_add_params_config():
         "request_id": "1",
         "reporter": "bandcoolreporter",
         "signature": "coolsignature",
-        "max_delay": "5",
+        "max_delay": "10",
     }
 
 
-def test_get_adapter():
-    path = "./app/adapter"
-    standards = [f for f in listdir(path) if isdir(join(path, f)) and not f.startswith("__")]
-    for standard in standards:
-        adapters = [
-            f.replace(".py", "")
-            for f in listdir(join(path, standard))
-            if isfile(join(path, standard, f)) and not f.startswith("__")
-        ]
-
-        for adapter in adapters:
-            helper.get_adapter(standard, adapter + "")
-
-
-def test_verify_data_source_id_success():
-    app = Sanic.get_app()
-    app.update_config({"MODE": "development", "ALLOWED_DATA_SOURCE_IDS": ["1", "2"]})
-    result = helper.verify_data_source_id("1")
-    assert result == True
-
-
-def test_verify_data_source_id_fail():
-    app = Sanic.get_app()
-    app.update_config({"MODE": "development", "ALLOWED_DATA_SOURCE_IDS": ["1", "2"]})
-    try:
-        result = helper.verify_data_source_id("3")
-        assert result == False
-    except:
-        pass
+def test_is_allow_data_source_id():
+    assert is_allow_data_source_id("1", ["1", "2"])
+    assert not is_allow_data_source_id("3", ["1", "2"])
 
 
 @pytest.mark.asyncio
 async def test_verify_request_success(httpx_mock: HTTPXMock):
+    expected = {"is_delay": False, "data_source_id": "226"}
+
     # mock response
-    def custom_response(_: httpx.Request):
-        return httpx.Response(
+    def custom_response(_: Request):
+        return Response(
             status_code=200,
             json={
                 "chain_id": "band-laozi-testnet5",
@@ -113,20 +82,22 @@ async def test_verify_request_success(httpx_mock: HTTPXMock):
                 "request_id": "2728447",
                 "external_id": "2",
                 "data_source_id": "226",
+                "is_delay": False,
             },
         )
 
     httpx_mock.add_callback(custom_response)
 
-    data_source_id = await helper.verify_request(mock_headers)
-    assert data_source_id == "226"
+    verified = await verify_request(mock_headers, "http://www.mock-url.com", "0")
+
+    assert verified == expected
 
 
 @pytest.mark.asyncio
 async def test_verify_request_failed(httpx_mock: HTTPXMock):
     # mock response
-    def custom_response(_: httpx.Request):
-        return httpx.Response(
+    def custom_response(_: Request):
+        return Response(
             status_code=500,
             content=b"server error",
         )
@@ -134,6 +105,6 @@ async def test_verify_request_failed(httpx_mock: HTTPXMock):
     httpx_mock.add_callback(custom_response)
 
     try:
-        await helper.verify_request(mock_headers)
-    except Exception as e:
-        assert str(e) == "server error"
+        await verify_request(mock_headers, "http://www.mock-url.com", "0")
+    except HTTPException as e:
+        assert e.status_code == 500

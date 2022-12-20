@@ -1,13 +1,11 @@
-FROM python:3.9
-
+FROM python:3.11-alpine AS builder
 ENV PYTHONUNBUFFERED 1
-ENV APP_HOME /app
+RUN mkdir app
+WORKDIR  /app
+COPY /pyproject.toml /app
+RUN pip3 install poetry
+RUN poetry config virtualenvs.create false
+RUN poetry install --no-root
+COPY . .
 
-WORKDIR $APP_HOME
-
-COPY ./ ./
-
-RUN python -m pip install --upgrade pip 
-RUN pip install --no-cache-dir -r requirements.txt
-
-ENTRYPOINT ["sanic", "main:app", "--host=0.0.0.0", "--fast"]
+ENTRYPOINT ["uvicorn", "app.main:app", "--host=0.0.0.0"]
