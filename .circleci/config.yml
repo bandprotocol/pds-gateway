@@ -43,7 +43,7 @@ jobs:
             echo $GOOGLE_CLOUD_KEYS | gcloud auth activate-service-account --key-file=-
             gcloud run deploy pds-gateway \
                 --image gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway:latest \
-                --set-env-vars MODE=dev,ALLOWED_DATA_SOURCE_IDS=236,27,VERIFY_REQUEST_URL=https://laozi-testnet6.bandchain.org/api/oracle/v1/verify_request,ADAPTER_TYPE=standard_crypto_price,ADAPTER_NAME=internal_service,API_URL=http://10.148.0.2?source=cmc,MAX_DELAY_VERIFICATION=5 \
+                --set-env-vars MODE=dev,ALLOWED_DATA_SOURCE_IDS="236,27",VERIFY_REQUEST_URL=https://laozi-testnet6.bandchain.org/api/oracle/v1/verify_request,ADAPTER_TYPE=standard_crypto_price,ADAPTER_NAME=internal_service,API_URL=http://10.148.0.2?source=cmc,MAX_DELAY_VERIFICATION=5 \
                 --platform managed --region $GOOGLE_CLOUD_REGION --allow-unauthenticated
 
 workflows:
