@@ -28,7 +28,7 @@ jobs:
             echo 'export PATH=~$PATH:~/.local/bin' >> $BASH_ENV
             echo ${GCLOUD_SERVICE_KEY} | base64 --decode --ignore-garbage > $HOME/gcloud-service-key.json
             echo 'export GOOGLE_CLOUD_KEYS=$(cat $HOME/gcloud-service-key.json)' >> $BASH_ENV
-            docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/$SERVICE_NAME .
+            docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway .
 
       - gcp-gcr/gcr-auth:
           gcloud-service-key: GOOGLE_CLOUD_KEYS
@@ -37,12 +37,12 @@ jobs:
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_CLOUD_PROJECT
           registry-url: "gcr.io"
-          image: SERVICE_NAME
+          image: pds-gateway
       - cloudrun/deploy:
           platform: "managed"
-          image: "gcr.io/$GOOGLE_CLOUD_PROJECT/$SERVICE_NAME"
-          service-name: "orb-gcp-cloud-run"
-          region: $GOOGLE_CLOUD_REGION
+          image: "gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway"
+          service-name: pds-gateway
+          region: GOOGLE_CLOUD_REGION
           unauthenticated: true
 
 workflows:
