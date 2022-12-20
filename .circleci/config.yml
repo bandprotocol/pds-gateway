@@ -41,7 +41,7 @@ jobs:
           name: Deploy to Cloud Run
           command: |
             echo $GOOGLE_CLOUD_KEYS | gcloud auth activate-service-account --key-file=-
-            gcloud run deploy pds-gateway --image gcr.io/$GCLOUD_PROJECT/pds-gateway:latest --platform managed --region $GOOGLE_CLOUD_REGION --allow-unauthenticated
+            gcloud run deploy pds-gateway --image gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway:latest --platform managed --region $GOOGLE_CLOUD_REGION --allow-unauthenticated
 
 workflows:
   version: 2
