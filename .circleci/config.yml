@@ -7,7 +7,7 @@ orbs:
 jobs:
   build_test:
     docker:
-      - image: cimg/python:3.10.9
+      - image: cimg/python:3.9.16
     steps:
       - checkout
       - run: pip install poetry
@@ -17,7 +17,7 @@ jobs:
 
   build_push_image_cloud_run_mangaged:
     docker:
-      - image: cimg/python:3.10.9
+      - image: cimg/python:3.9.16
     steps:
       - checkout
       - setup_remote_docker:
