@@ -22,7 +22,7 @@ jobs:
       executor: gcp-cli/default
       steps:
       - gcp-cli/setup:
-          version: 404.0.0
+          version: 412.0.0
       - run:
           name: deploy service
           command: |
