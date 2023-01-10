@@ -8,10 +8,10 @@ from app.utils.helper import add_params_config, get_bandchain_params, is_allow_d
 
 class MockConfig:
     VERIFY_REQUEST_URL = "http://localhost.example"
-    ALLOWED_DATA_SOURCE_IDS = ["1"]
+    ALLOWED_DATA_SOURCE_IDS = [1]
     CACHE_SIZE = 1000
     TTL_TIME = "10m"
-    MAX_DELAY_VERIFICATION = "5"
+    MAX_DELAY_VERIFICATION = 5
 
 
 mock_headers = {
@@ -77,7 +77,7 @@ async def test_verify_request_success(httpx_mock: HTTPXMock):
         return Response(
             status_code=200,
             json={
-                "chain_id": "band-laozi-testnet5",
+                "chain_id": "band-laozi-testnet6",
                 "validator": "bandvaloper1knxukd35rm4cmthkdgzkfaf8lrhpexv752l7mh",
                 "request_id": "2728447",
                 "external_id": "2",

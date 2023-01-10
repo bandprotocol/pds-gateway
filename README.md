@@ -10,10 +10,6 @@
 
 - run "docker-compose up"
 
-## Run by Sanic directly
-
-- sanic main:app
-
 # Testing
 
 - run "pytest"

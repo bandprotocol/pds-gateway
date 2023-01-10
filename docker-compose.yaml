@@ -13,7 +13,7 @@ services:
       # FOR APPLICATION
       - MODE=${MODE:-production}
       # FOR VERIFICATION
-      - VERIFY_REQUEST_URL=${VERIFY_REQUEST_URL:-https://laozi-testnet5.bandchain.org/api/oracle/v1/verify_request}
+      - VERIFY_REQUEST_URL=${VERIFY_REQUEST_URL:-https://laozi-testnet6.bandchain.org/api/oracle/v1/verify_request}
       - ALLOWED_DATA_SOURCE_IDS=${ALLOWED_DATA_SOURCE_IDS:-}
       - CACHE_SIZE==${CACHE_SIZE:-1000}
       # FOR ADAPTER
