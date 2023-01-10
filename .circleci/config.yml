@@ -80,9 +80,15 @@ workflows:
       - deploy:
           requires:
             - build_push_image_on_gcr
-          matrix:
-            parameters:
-              service-name: ["cmc-gateway", "bnc-gateway"]
-              allowed-ds-ids: ["[236,274]", "[234,270]"]
-              api-url: ["http://10.148.0.2?source=cmc", "http://10.148.0.2?source=bnc"]
+          parameters:
+            service-name: "cmc-gateway"
+            allowed-ds-ids: "[236,274]"
+            api-url: "http://10.148.0.2?source=cmc"
+      - deploy:
+          requires:
+            - build_push_image_on_gcr
+          parameters:
+            service-name: "bnc-gateway"
+            allowed-ds-ids: "[234,270]"
+            api-url: "http://10.148.0.2?source=bnc"
       
