@@ -47,7 +47,7 @@ async def verify(request: Request, settings: config.Settings = settings):
 
         verified = await verify_request(request.headers, settings.VERIFY_REQUEST_URL, settings.MAX_DELAY_VERIFICATION)
 
-        if not is_allow_data_source_id(verified["data_source_id"], settings.ALLOWED_DATA_SOURCE_IDS.split(",")):
+        if not is_allow_data_source_id(int(verified["data_source_id"]), settings.ALLOWED_DATA_SOURCE_IDS):
             raise HTTPException(
                 status_code=401,
                 detail={

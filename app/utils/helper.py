@@ -28,20 +28,18 @@ def get_band_signature_hash(headers: Dict[str, str]) -> str:
     return hash(headers["BAND_SIGNATURE"])
 
 
-def add_params_config(params: Dict[str, str], max_delay_verification: Union[int, str]) -> Dict[str, str]:
+def add_params_config(params: Dict[str, str], max_delay_verification: int) -> Dict[str, str]:
     params["max_delay"] = str(max_delay_verification)
     return params
 
 
-async def verify_request(
-    headers: Dict[str, str], verify_request_url: str, max_delay_verification: Union[int, str]
-) -> dict:
+async def verify_request(headers: Dict[str, str], verify_request_url: str, max_delay_verification: int) -> dict:
     try:
         client = AsyncClient()
 
         res = await client.get(
             url=verify_request_url,
-            params=add_params_config(get_bandchain_params(headers), str(max_delay_verification)),
+            params=add_params_config(get_bandchain_params(headers), max_delay_verification),
         )
 
         # check result of request
@@ -66,5 +64,5 @@ async def verify_request(
         )
 
 
-def is_allow_data_source_id(data_source_id: str, allowed_data_source_ids: List[str]) -> bool:
+def is_allow_data_source_id(data_source_id: str, allowed_data_source_ids: List[int]) -> bool:
     return data_source_id in allowed_data_source_ids

@@ -1,15 +1,17 @@
-from pydantic import BaseSettings
+from pydantic import BaseSettings, HttpUrl
 
 
 class Settings(BaseSettings):
     MODE: str = "development"
     LOG_LEVEL: str = "INFO"
+
     # VERIFICATION
-    VERIFY_REQUEST_URL: str
-    ALLOWED_DATA_SOURCE_IDS: str
+    VERIFY_REQUEST_URL: HttpUrl
+    ALLOWED_DATA_SOURCE_IDS: list[int]
     CACHE_SIZE: int = 1000
     TTL_TIME: str = "10m"
-    MAX_DELAY_VERIFICATION: str = "0"
+    MAX_DELAY_VERIFICATION: int = 0
+
     # ADAPTER
     ADAPTER_TYPE: str
     ADAPTER_NAME: str
