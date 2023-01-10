@@ -15,7 +15,7 @@ jobs:
       - run: poetry install --no-root
       - run: poetry run pytest
 
-  build_push_image_cloud_run_mangaged:
+  build_push_image_on_gcr:
     docker:
       - image: cimg/python:3.11.1
     steps:
@@ -38,26 +38,51 @@ jobs:
           registry-url: "gcr.io"
           image: pds-gateway
       - run:
+          name: Push image to GCR
+          command: docker push gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway
+  
+  deploy:
+    parameters:
+      service-name:
+        type: string
+      allowed-ds-ids:
+        type: string
+      api-url:
+        type: string
+    docker:
+      - image: cimg/python:3.11.1
+    steps:
+      - run:
           name: Deploy to Cloud Run
           command: |
             echo $GOOGLE_CLOUD_KEYS | gcloud auth activate-service-account --key-file=-
-            gcloud run deploy pds-gateway \
+            gcloud run deploy << parameters.allowed-ds-ids >> \
                 --image gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway:latest \
                 --port 8000 \
                 --set-env-vars MODE=dev \
-                --set-env-vars ALLOWED_DATA_SOURCE_IDS=236 \
+                --set-env-vars ALLOWED_DATA_SOURCE_IDS=<< parameters.allowed-ds-ids >> \
                 --set-env-vars VERIFY_REQUEST_URL=https://laozi-testnet6.bandchain.org/api/oracle/v1/verify_request \
                 --set-env-vars ADAPTER_TYPE=standard_crypto_price \
                 --set-env-vars ADAPTER_NAME=internal_service \
-                --set-env-vars API_URL=http://10.148.0.2?source=cmc \
+                --set-env-vars API_URL=<< parameters.api-url >> \
                 --set-env-vars MAX_DELAY_VERIFICATION=5 \
                 --platform managed --region $GOOGLE_CLOUD_REGION --allow-unauthenticated
+                
 
 workflows:
   version: 2
   build-and-deploy:
     jobs:
       - build_test
-      - build_push_image_cloud_run_mangaged:
-            requires:
-              - build_test
+      - build_push_image_on_gcr:
+          requires:
+            - build_test
+      - deploy:
+          requires:
+            - build_push_image_on_gcr
+          matrix:
+            parameters:
+              service-name: ["cmc-gateway", "bnc-gateway"]
+              allowed-ds-ids: ["[236,274]", "[234,270]"]
+              api-url: ["http://10.148.0.2?source=cmc", "http://10.148.0.2?source=bnc"]
+      
