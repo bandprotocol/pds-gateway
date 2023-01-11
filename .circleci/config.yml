@@ -3,10 +3,14 @@ version: 2.1
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.15.1
 
-jobs:
-  build_test:
+executors:
+  python:
     docker:
       - image: cimg/python:3.11.1
+
+jobs:
+  build_test:
+    executor: python
     steps:
       - checkout
       - run: pip install poetry
@@ -15,8 +19,7 @@ jobs:
       - run: poetry run pytest
 
   build_push_image_on_gcr:
-    docker:
-      - image: cimg/python:3.11.1
+    executor: python
     steps:
       - checkout
       - setup_remote_docker:
@@ -45,8 +48,7 @@ jobs:
         type: string
       api-url:
         type: string
-    docker:
-      - image: cimg/python:3.11.1
+    executor: python
     steps:
       - run:
           name: Init gcloud CLI
