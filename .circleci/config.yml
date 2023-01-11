@@ -62,7 +62,7 @@ jobs:
           name: Deploy to Cloud Run
           command: |
             echo $GOOGLE_CLOUD_KEYS | gcloud auth activate-service-account --key-file=-
-            gcloud run deploy << parameters.allowed-ds-ids >> \
+            gcloud run deploy << parameters.service-name >> \
                 --image gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway:latest \
                 --port 8000 \
                 --set-env-vars MODE=dev \
