@@ -19,6 +19,8 @@ jobs:
       - image: cimg/python:3.11.1
     steps:
       - checkout
+      - setup_remote_docker:
+          docker_layer_caching: false
       - run:
           name: Init gcloud CLI and build Docker image
           command: |
