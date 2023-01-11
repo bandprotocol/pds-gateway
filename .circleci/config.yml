@@ -1,7 +1,6 @@
 version: 2.1
 
 orbs:
-  gcp-cli: circleci/gcp-cli@3.0.1
   gcp-gcr: circleci/gcp-gcr@0.15.1
 
 jobs:
@@ -20,8 +19,6 @@ jobs:
       - image: cimg/python:3.11.1
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: false
       - run:
           name: Init gcloud CLI and build Docker image
           command: |
@@ -33,9 +30,10 @@ jobs:
           gcloud-service-key: GOOGLE_CLOUD_KEYS
           google-project-id: GOOGLE_CLOUD_PROJECT
           google-compute-zone: GOOGLE_CLOUD_REGION
-      - run:
-          name: Push image to GCR
-          command: docker push gcr.io/$GOOGLE_CLOUD_PROJECT/pds-gateway
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_CLOUD_PROJECT
+          registry-url: "gcr.io"
+          image: pds-gateway
   
   deploy:
     parameters:
@@ -45,16 +43,19 @@ jobs:
         type: string
       api-url:
         type: string
-    executor: gcp-cli/default
+    docker:
+      - image: cimg/python:3.11.1
     steps:
-      - gcp-cli/install
-      - gcp-cli/initialize
       - run:
           name: Init gcloud CLI
           command: |
             echo 'export PATH=~$PATH:~/.local/bin' >> $BASH_ENV
             echo ${GCLOUD_SERVICE_KEY} | base64 --decode --ignore-garbage > $HOME/gcloud-service-key.json
             echo 'export GOOGLE_CLOUD_KEYS=$(cat $HOME/gcloud-service-key.json)' >> $BASH_ENV
+      - gcp-gcr/gcr-auth:
+          gcloud-service-key: GOOGLE_CLOUD_KEYS
+          google-project-id: GOOGLE_CLOUD_PROJECT
+          google-compute-zone: GOOGLE_CLOUD_REGION
       - run:
           name: Deploy to Cloud Run
           command: |
