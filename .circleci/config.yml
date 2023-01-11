@@ -45,9 +45,10 @@ jobs:
         type: string
       api-url:
         type: string
-    docker:
-      - image: cimg/python:3.11.1
+    executor: gcp-cli/default
     steps:
+      - gcp-cli/install
+      - gcp-cli/initialize
       - run:
           name: Init gcloud CLI
           command: |
