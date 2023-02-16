@@ -1,6 +1,18 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field
+
+
+class BaseModel(PydanticBaseModel):
+    def to_dict(self):
+        """Converts the model to a dictionary.
+
+        Returns:
+            The Model as a dictionary.
+        """
+        return self.dict(exclude_none=True)
 
 
 class Verify(BaseModel):
@@ -9,16 +21,10 @@ class Verify(BaseModel):
     error_type: Optional[str]
     error_msg: Optional[str]
 
-    def to_dict(self):
-        return {k: v for k, v in self.dict().items() if v or type(v) is bool}
-
 
 class ProviderResponse(BaseModel):
     response_code: int = Field(...)
     error_msg: Optional[str]
-
-    def to_dict(self):
-        return {k: v for k, v in self.dict().items() if v}
 
 
 class Report(BaseModel):
@@ -32,6 +38,3 @@ class Report(BaseModel):
     verify: dict = Field(...)
     provider_response: Optional[dict]
     created_at: datetime = Field(default=datetime.utcnow())
-
-    def to_dict(self):
-        return {k: v for k, v in self.dict().items() if v or type(v) is bool}

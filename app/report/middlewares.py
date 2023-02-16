@@ -1,14 +1,22 @@
 import functools
+from typing import Optional, Any
 
 from fastapi import HTTPException
 
-from app.utils.helper import get_bandchain_params_with_type
 from app.report.db import DB
 from app.report.models import Report, Verify, ProviderResponse
+from app.utils.helper import get_bandchain_params_with_type
 
 
 class CollectVerifyData:
-    def __init__(self, db: DB = None):
+    """Class to collect verify data."""
+
+    def __init__(self, db: Optional[DB] = None) -> None:
+        """Inits CollectVerifyData with an optional db.
+
+        Args:
+            db: Report database class.
+        """
         self.db = db
 
     def __call__(self, func):
@@ -16,7 +24,6 @@ class CollectVerifyData:
         async def wrapper_collect_verify_data(*args, **kwargs):
             try:
                 res = await func(*args, **kwargs)
-
             except HTTPException as e:
                 if self.db:
                     request = kwargs.get("request")
@@ -24,7 +31,8 @@ class CollectVerifyData:
                     client_ip = request.client.host
                     bandchain_params = get_bandchain_params_with_type(request.headers)
 
-                    self.db.save_report(
+                    error_details: Any = e.detail
+                    self.db.save(
                         Report(
                             user_ip=client_ip,
                             reporter_address=bandchain_params.get("reporter", None),
@@ -34,12 +42,11 @@ class CollectVerifyData:
                             external_id=bandchain_params.get("external_id", None),
                             verify=Verify(
                                 response_code=e.status_code,
-                                error_type=e.detail["verify_error_type"],
-                                error_msg=e.detail["error_msg"],
+                                error_type=error_details["verify_error_type"],
+                                error_msg=error_details["error_msg"],
                             ).to_dict(),
                         )
                     )
-
                 raise e
 
             return res
@@ -48,59 +55,54 @@ class CollectVerifyData:
 
 
 class CollectRequestData:
-    def __init__(self, db: DB = None):
+    """Class to collect request data."""
+
+    def __init__(self, db: Optional[DB] = None):
+        """Inits CollectVerifyData with an optional db.
+
+        Args:
+            db: Report database class.
+        """
         self.db = db
 
     def __call__(self, func):
         @functools.wraps(func)
         async def wrapper_collect_request_data(*args, **kwargs):
+            cached_data: bool = False
+            provider_response: Optional[dict] = None
             try:
                 res = await func(*args, **kwargs)
 
-                if self.db:
-                    request = kwargs.get("request")
-                    verify = kwargs.get("verify")
-                    client_ip = request.client.host
-                    bandchain_params = get_bandchain_params_with_type(request.headers)
-
-                    self.db.save_report(
-                        Report(
-                            user_ip=client_ip,
-                            reporter_address=bandchain_params.get("reporter", None),
-                            validator_address=bandchain_params.get("validator", None),
-                            request_id=bandchain_params.get("request_id", None),
-                            data_source_id=bandchain_params.get("data_source_id", None),
-                            external_id=bandchain_params.get("external_id", None),
-                            cached_data=res.get("cached_data", False),
-                            verify=verify.to_dict(),
-                            provider_response=ProviderResponse(response_code=200).to_dict(),
-                        )
-                    )
-
+                cached_data = res.get("cached_data", False)
+                provider_response = ProviderResponse(response_code=200).to_dict()
             except HTTPException as e:
-                if self.db:
-                    request = kwargs.get("request")
-                    verify = kwargs.get("verify")
-                    client_ip = request.client.host
-                    bandchain_params = get_bandchain_params_with_type(request.headers)
+                error_detail: Any = e.detail
 
-                    self.db.save_report(
-                        Report(
-                            user_ip=client_ip,
-                            reporter_address=bandchain_params.get("reporter", None),
-                            validator_address=bandchain_params.get("validator", None),
-                            request_id=bandchain_params.get("request_id", None),
-                            data_source_id=bandchain_params.get("data_source_id", None),
-                            external_id=bandchain_params.get("external_id", None),
-                            cached_data=False,
-                            verify=verify.to_dict(),
-                            provider_response=ProviderResponse(
-                                response_code=e.status_code, error_msg=e.detail["error_msg"]
-                            ).to_dict(),
-                        )
-                    )
+                provider_response = ProviderResponse(
+                    response_code=e.status_code, error_msg=error_detail["error_msg"]
+                ).to_dict()
 
                 raise e
+            finally:
+                if self.db:
+                    request = kwargs.get("request")
+                    verify = kwargs.get("verify")
+                    client_ip = request.client.host
+
+                    bandchain_params = get_bandchain_params_with_type(request.headers)
+
+                    report = Report(
+                        user_ip=client_ip,
+                        reporter_address=bandchain_params.get("reporter", None),
+                        validator_address=bandchain_params.get("validator", None),
+                        request_id=bandchain_params.get("request_id", None),
+                        data_source_id=bandchain_params.get("data_source_id", None),
+                        external_id=bandchain_params.get("external_id", None),
+                        cached_data=cached_data,
+                        verify=verify.to_dict(),
+                        provider_response=provider_response,
+                    )
+                    self.db.save(report)
 
             return res
 
