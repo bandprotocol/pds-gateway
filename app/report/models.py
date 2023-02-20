@@ -6,7 +6,7 @@ from pydantic import Field
 
 
 class BaseModel(PydanticBaseModel):
-    def to_dict(self):
+    def to_dict(self) -> dict[str, str]:
         """Converts the model to a dictionary.
 
         Returns:

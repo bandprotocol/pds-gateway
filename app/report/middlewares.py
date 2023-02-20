@@ -1,5 +1,5 @@
 import functools
-from typing import Optional, Any
+from typing import Optional, Any, Callable
 
 from fastapi import HTTPException
 
@@ -9,17 +9,17 @@ from app.utils.helper import get_bandchain_params_with_type
 
 
 class CollectVerifyData:
-    """Class to collect verify data."""
+    """A decorator that collects verify data from requests, and saves a corresponding reports to a database."""
 
     def __init__(self, db: Optional[DB] = None) -> None:
-        """Inits CollectVerifyData with an optional db.
+        """Initializes a CollectVerifyData object with an optional database.
 
         Args:
-            db: Report database class.
+            db : An optional database for saving reports.
         """
         self.db = db
 
-    def __call__(self, func):
+    def __call__(self, func: Callable):
         @functools.wraps(func)
         async def wrapper_collect_verify_data(*args, **kwargs):
             try:
@@ -55,7 +55,7 @@ class CollectVerifyData:
 
 
 class CollectRequestData:
-    """Class to collect request data."""
+    """A decorator that collects request data from requests and saves a corresponding to a database."""
 
     def __init__(self, db: Optional[DB] = None):
         """Inits CollectVerifyData with an optional db.
