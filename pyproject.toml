@@ -3,7 +3,6 @@ authors = ["bandprotocol <dev@bandprotocol.com>"]
 description = "Python webserver as a gateway between BandChain validators and premium data API"
 license = "GPL-3.0 license"
 name = "pds-gateway"
-packages = [{include = "pds_gateway"}]
 readme = "README.md"
 version = "0.1.0"
 
