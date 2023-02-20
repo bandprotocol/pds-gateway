@@ -15,13 +15,14 @@ class MockConfig:
 
 
 mock_headers = {
+    "NOT_BAND": "0",
     "BAND_CHAIN_ID": "bandchain",
     "BAND_VALIDATOR": "bandcoolvalidator",
     "BAND_REQUEST_ID": "1",
     "BAND_EXTERNAL_ID": "1",
     "BAND_DATA_SOURCE_ID": "1",
     "BAND_REPORTER": "bandcoolreporter",
-    "BAND_SIGNATURE": "coolsignature",
+    "band_signature": "coolsignature",
 }
 
 
