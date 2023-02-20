@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     VERIFY_REQUEST_URL: HttpUrl
     ALLOWED_DATA_SOURCE_IDS: list[int]
     CACHE_SIZE: int = 1000
-    TTL_TIME: str = "10m"
+    TTL: str = "10m"
     MAX_DELAY_VERIFICATION: int = 0
 
     # ADAPTER
