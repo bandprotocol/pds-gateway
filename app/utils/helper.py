@@ -1,3 +1,5 @@
+import re
+
 from typing import List, Mapping, Any
 
 from fastapi import HTTPException
@@ -15,8 +17,8 @@ def get_bandchain_params(headers: Mapping[str, Any]) -> dict[str, Any]:
     Returns:
         A dictionary containing BandChain's parameters
     """
-    params = {k.lower()[5:]: v for k, v in headers.items() if k.lower().startswith("band_")}
-    return params
+
+    return {r.group(1): v for k, v in headers.items() if (r := re.search("^band_(.+)", k.lower()))}
 
 
 def get_bandchain_params_with_type(headers: Mapping[str, Any]) -> dict[str, Any]:
@@ -28,16 +30,11 @@ def get_bandchain_params_with_type(headers: Mapping[str, Any]) -> dict[str, Any]
     Returns:
         A dictionary containing BandChain's parameters
     """
-    params = {}
     params_type_int = ["request_id", "data_source_id", "external_id"]
-    for k, v in headers.items():
-        if k.lower().startswith("band_"):
-            band_arg = k.lower()[5:]
-            if band_arg in params_type_int:
-                params[band_arg] = int(v)
-            else:
-                params[band_arg] = v
-
+    params = get_bandchain_params(headers)
+    for k, v in params:
+        if k in params_type_int:
+            params[k] = int(v)
     return params
 
 
