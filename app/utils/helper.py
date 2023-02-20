@@ -1,4 +1,4 @@
-from typing import List, Mapping
+from typing import List, Mapping, Any
 
 from fastapi import HTTPException
 from httpx import AsyncClient, HTTPStatusError
@@ -6,7 +6,7 @@ from httpx import AsyncClient, HTTPStatusError
 from app.utils.types import VerifyErrorType
 
 
-def get_bandchain_params(headers: Mapping[str, str]) -> dict[str, str]:
+def get_bandchain_params(headers: Mapping[str, Any]) -> dict[str, Any]:
     """Gets BandChain parameters from the header.
 
     Args:
@@ -19,7 +19,7 @@ def get_bandchain_params(headers: Mapping[str, str]) -> dict[str, str]:
     return params
 
 
-def get_bandchain_params_with_type(headers: Mapping[str, str]) -> dict[str, str]:
+def get_bandchain_params_with_type(headers: Mapping[str, Any]) -> dict[str, Any]:
     """Gets BandChain parameters with type from the header.
 
     Args:
@@ -41,7 +41,7 @@ def get_bandchain_params_with_type(headers: Mapping[str, str]) -> dict[str, str]
     return params
 
 
-def get_band_signature_hash(headers: Mapping[str, str]) -> int:
+def get_band_signature_hash(headers: Mapping[str, Any]) -> int:
     """Gets the hash of the band signature from a header
 
     Args:
@@ -53,7 +53,7 @@ def get_band_signature_hash(headers: Mapping[str, str]) -> int:
     return hash(headers["BAND_SIGNATURE"])
 
 
-def add_max_delay_param(params: dict[str, str], max_delay_verification: int) -> dict[str, str]:
+def add_max_delay_param(params: dict[str, Any], max_delay_verification: int) -> dict[str, Any]:
     """Add a 'max_delay' parameter to the input dictionary of parameters and return the updated dictionary.
 
     Args:
@@ -71,7 +71,7 @@ async def verify_request(
     headers: Mapping[str, str],
     verify_request_url: str,
     max_delay_verification: int,
-) -> dict:
+) -> dict[str, Any]:
     """Verifies if the request came from BandChain
 
     Args:

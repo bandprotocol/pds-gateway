@@ -1,4 +1,4 @@
-import functools
+from functools import wraps
 from typing import Optional, Any, Callable
 
 from fastapi import HTTPException
@@ -19,8 +19,8 @@ class CollectVerifyData:
         """
         self.db = db
 
-    def __call__(self, func: Callable):
-        @functools.wraps(func)
+    def __call__(self, func: Callable[..., Any]):
+        @wraps(func)
         async def wrapper_collect_verify_data(*args, **kwargs):
             try:
                 res = await func(*args, **kwargs)
@@ -65,8 +65,8 @@ class CollectRequestData:
         """
         self.db = db
 
-    def __call__(self, func):
-        @functools.wraps(func)
+    def __call__(self, func: Callable[..., Any]):
+        @wraps(func)
         async def wrapper_collect_request_data(*args, **kwargs):
             cached_data: bool = False
             provider_response: Optional[dict] = None

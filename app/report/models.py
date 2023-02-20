@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field
 
 
 class BaseModel(PydanticBaseModel):
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, Any]:
         """Converts the model to a dictionary.
 
         Returns:
