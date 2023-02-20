@@ -41,7 +41,6 @@ async def verify(req: Request, settings: Settings = Depends(Settings)) -> Verify
     # Skip verification if request has already been cached
     if settings.MODE == "production" and app.state.cache_data.get_data(get_band_signature_hash(req.headers)):
         # Verify the request is from BandChain
-
         verified = await verify_request(req.headers, settings.VERIFY_REQUEST_URL, settings.MAX_DELAY_VERIFICATION)
 
         # Checks if the data source requesting is whitelisted
@@ -75,7 +74,7 @@ async def request(req: Request, settings: Settings = Depends(Settings)) -> str:
     try:
         output = await app.state.adapter.unified_call(dict(req.query_params))
         if settings.MODE == "production":
-            # cache data
+            # Cache data
             app.state.cache_data.set_data(get_band_signature_hash(req.headers), output)
 
         return output
