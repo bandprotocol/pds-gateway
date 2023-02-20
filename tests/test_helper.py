@@ -3,7 +3,7 @@ from httpx import Request, Response
 from fastapi import HTTPException
 from pytest_httpx import HTTPXMock
 
-from app.utils.helper import add_params_config, get_bandchain_params, is_allow_data_source_id, verify_request
+from app.utils.helper import add_max_delay_param, get_bandchain_params, is_data_source_id_allowed, verify_request
 
 
 class MockConfig:
@@ -40,7 +40,7 @@ def test_get_bandchain_params():
 
 
 def test_add_params_config():
-    params = add_params_config(
+    params = add_max_delay_param(
         {
             "chain_id": "bandchain",
             "validator": "bandcoolvalidator",
@@ -64,8 +64,8 @@ def test_add_params_config():
 
 
 def test_is_allow_data_source_id():
-    assert is_allow_data_source_id("1", ["1", "2"])
-    assert not is_allow_data_source_id("3", ["1", "2"])
+    assert is_data_source_id_allowed("1", ["1", "2"])
+    assert not is_data_source_id_allowed("3", ["1", "2"])
 
 
 @pytest.mark.asyncio
