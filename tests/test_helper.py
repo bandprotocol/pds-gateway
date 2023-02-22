@@ -1,9 +1,14 @@
 import pytest
-from httpx import Request, Response
 from fastapi import HTTPException
+from httpx import Request, Response
 from pytest_httpx import HTTPXMock
 
-from app.utils.helper import add_max_delay_param, get_bandchain_params, is_data_source_id_allowed, verify_request
+from app.utils.helper import (
+    add_max_delay_param,
+    get_bandchain_params,
+    is_data_source_id_allowed,
+    verify_request_from_bandchain,
+)
 
 
 class MockConfig:
@@ -22,7 +27,7 @@ mock_headers = {
     "BAND_EXTERNAL_ID": "1",
     "BAND_DATA_SOURCE_ID": "1",
     "BAND_REPORTER": "bandcoolreporter",
-    "band_signature": "coolsignature",
+    "BAND_SIGNATURE": "coolsignature",
 }
 
 
@@ -89,7 +94,7 @@ async def test_verify_request_success(httpx_mock: HTTPXMock):
 
     httpx_mock.add_callback(custom_response)
 
-    verified = await verify_request(mock_headers, "http://www.mock-url.com", "0")
+    verified = await verify_request_from_bandchain(mock_headers, "http://www.mock-url.com", "0")
 
     assert verified == expected
 
@@ -106,6 +111,6 @@ async def test_verify_request_failed(httpx_mock: HTTPXMock):
     httpx_mock.add_callback(custom_response)
 
     try:
-        await verify_request(mock_headers, "http://www.mock-url.com", "0")
+        await verify_request_from_bandchain(mock_headers, "http://www.mock-url.com", "0")
     except HTTPException as e:
         assert e.status_code == 500
