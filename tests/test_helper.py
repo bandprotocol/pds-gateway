@@ -45,7 +45,7 @@ def test_get_bandchain_params():
     }
 
 
-def test_add_params_config():
+def test_add_max_delay_param():
     params = add_max_delay_param(
         {
             "chain_id": "bandchain",
@@ -70,12 +70,12 @@ def test_add_params_config():
 
 
 def test_is_allow_data_source_id():
-    assert is_data_source_id_allowed("1", ["1", "2"])
-    assert not is_data_source_id_allowed("3", ["1", "2"])
+    assert is_data_source_id_allowed(1, [1, 2])
+    assert not is_data_source_id_allowed(3, [1, 2])
 
 
 @pytest.mark.asyncio
-async def test_verify_request_success(httpx_mock: HTTPXMock):
+async def test_verify_request_from_bandchain_success(httpx_mock: HTTPXMock):
     expected = {"is_delay": False, "data_source_id": "226"}
 
     # mock response
@@ -100,7 +100,7 @@ async def test_verify_request_success(httpx_mock: HTTPXMock):
 
 
 @pytest.mark.asyncio
-async def test_verify_request_failed(httpx_mock: HTTPXMock):
+async def test_verify_request_from_bandchain_failed(httpx_mock: HTTPXMock):
     # mock response
     def custom_response(_: Request):
         return Response(
