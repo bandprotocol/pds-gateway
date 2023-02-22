@@ -30,10 +30,9 @@ def get_bandchain_params_with_type(headers: Mapping[str, Any]) -> dict[str, Any]
     Returns:
         A dictionary containing BandChain's parameters
     """
-    params_type_int = ["request_id", "data_source_id", "external_id"]
     params = get_bandchain_params(headers)
     for k, v in params:
-        if k in params_type_int:
+        if k in ["request_id", "data_source_id", "external_id"]:
             params[k] = int(v)
     return params
 
@@ -64,7 +63,7 @@ def add_max_delay_param(params: dict[str, Any], max_delay_verification: int) -> 
     return params
 
 
-async def verify_request(
+async def verify_request_from_bandchain(
     headers: Mapping[str, str],
     verify_request_url: str,
     max_delay_verification: int,
@@ -91,18 +90,13 @@ async def verify_request(
         client = AsyncClient()
 
         params = add_max_delay_param(get_bandchain_params(headers), max_delay_verification)
-        while True:
-            res = await client.get(url=verify_request_url, params=params)
+        res = await client.get(url=verify_request_url, params=params)
 
-            # Raises for non-2xx codes
-            res.raise_for_status()
+        # Raises for non-2xx codes
+        res.raise_for_status()
 
-            # Gets body
-            body = res.json()
-
-            # If result is delayed, retry until results given, otherwise break out
-            if body.get("is_delay", False):
-                break
+        # Gets body
+        body = res.json()
 
         return {"is_delay": body.get("is_delay", False), "data_source_id": body.get("data_source_id", None)}
     except HTTPStatusError as e:
