@@ -94,7 +94,7 @@ async def test_verify_request_from_bandchain_success(httpx_mock: HTTPXMock):
 
     httpx_mock.add_callback(custom_response)
 
-    verified = await verify_request_from_bandchain(mock_headers, "http://www.mock-url.com", "0")
+    verified = await verify_request_from_bandchain(mock_headers, "https://www.mock-url.com", 0)
 
     assert verified == expected
 
@@ -111,6 +111,6 @@ async def test_verify_request_from_bandchain_failed(httpx_mock: HTTPXMock):
     httpx_mock.add_callback(custom_response)
 
     try:
-        await verify_request_from_bandchain(mock_headers, "http://www.mock-url.com", "0")
+        await verify_request_from_bandchain(mock_headers, "https://www.mock-url.com", 0)
     except HTTPException as e:
         assert e.status_code == 500
