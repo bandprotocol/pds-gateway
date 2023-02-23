@@ -27,8 +27,7 @@ class DB:
         Returns:
             A report containing the latest report
         """
-        # Filter out user IP and storage ID
-        cursor = self.report.find(filter={"_id": 0}).sort("created_at", -1).limit(1)
+        cursor = self.report.find().sort("created_at", -1).limit(1)
         latest_request_info = await cursor.to_list(length=1)
 
         if len(latest_request_info) == 0:

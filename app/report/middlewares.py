@@ -28,6 +28,8 @@ class CollectRequestData:
             try:
                 if verify.response_code == 200:
                     res = await func(request, verify)
+                else:
+                    raise HTTPException(status_code=verify.response_code, detail=verify.error_msg)
             except HTTPException as e:
                 raise e
             except Exception as e:
@@ -59,6 +61,8 @@ class CollectRequestData:
                         verify=verify,
                         provider_response=provider_response,
                     )
+                    print(report)
+
                     self.db.save(report)
 
             return res

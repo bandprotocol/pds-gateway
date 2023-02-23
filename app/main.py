@@ -85,7 +85,7 @@ async def request_data(request: Request, verify: Verify = Depends(verify_request
         )
 
 
-@app.get("/status", response_model_exclude={"user_ip"})
+@app.get("/status")
 async def get_status_report() -> StatusReport:
     """Gets a status report: gateway info, latest request and latest failed request"""
     gateway_info = GatewayInfo(

@@ -31,7 +31,7 @@ class ProviderResponse(BaseModel):
 
 
 class Report(BaseModel):
-    user_ip: str
+    user_ip: str = Field(..., exclude=True)
     reporter_address: Optional[str]
     validator_address: Optional[str]
     request_id: Optional[int]
