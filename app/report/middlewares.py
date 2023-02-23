@@ -4,7 +4,6 @@ from typing import Optional, Any, Callable
 
 from fastapi import HTTPException, Request
 
-from app.config import Settings
 from app.report.db import DB
 from app.report.models import Report, Verify, ProviderResponse
 from app.utils.helper import get_bandchain_params_with_type
@@ -21,14 +20,14 @@ class CollectRequestData:
         """
         self.db = db
 
-    def __call__(self, func: Callable[[Request, Verify, Settings], Any]):
+    def __call__(self, func: Callable[[Request, Verify], Any]):
         @wraps(func)
-        async def wrapper_collect_request_data(request: Request, verify: Verify, settings: Settings):
+        async def wrapper_collect_request_data(request: Request, verify: Verify):
             res = None
 
             try:
                 if verify.response_code == 200:
-                    res = await func(request, verify, settings)
+                    res = await func(request, verify)
             except HTTPException as e:
                 raise e
             except Exception as e:

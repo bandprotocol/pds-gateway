@@ -27,7 +27,7 @@ class Verify(BaseModel):
 
 class ProviderResponse(BaseModel):
     response_code: int
-    error_msg: Optional[str]
+    error_msg: Optional[Any]
 
 
 class Report(BaseModel):

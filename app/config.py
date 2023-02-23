@@ -2,14 +2,13 @@ from typing import Literal
 
 from pydantic import BaseSettings, HttpUrl
 
-
-Modes: Literal["production", "development"]
-LoggingLevels: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"]
+MODES = Literal["production", "development"]
+LOG_LEVELS = Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"]
 
 
 class Settings(BaseSettings):
-    MODE: Modes = "development"
-    LOG_LEVEL: LoggingLevels = "INFO"
+    MODE: MODES = "development"
+    LOG_LEVEL: LOG_LEVELS = "INFO"
 
     # VERIFICATION
     VERIFY_REQUEST_URL: HttpUrl

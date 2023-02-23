@@ -1,5 +1,5 @@
 import logging
-from typing import Any, TypeVar
+from typing import Any
 
 from fastapi import Depends, Request, FastAPI, HTTPException
 from httpx import HTTPStatusError
@@ -17,27 +17,21 @@ from app.utils.types import VerifyErrorType
 
 app = FastAPI()
 
-Response = TypeVar("Response", bound=dict)
+# Get setting
+settings = Settings()
+
+# Setup logger
+init_loggers(log_level=settings.LOG_LEVEL)
+log = logging.getLogger("pds_gateway_log")
+log.info(f"GATEWAY_MODE: {settings.MODE}")
+
+# Setup app state
+app.state.cache_data = Cache(settings.CACHE_SIZE, timeparse(settings.TTL))
+app.state.db = init_db(settings.MONGO_DB_URL, settings.COLLECTION_DB_NAME, log)
+app.state.adapter = init_adapter(settings.ADAPTER_TYPE, settings.ADAPTER_NAME)
 
 
-@app.on_event("startup")
-async def set_startup() -> None:
-    """Runs events on server startup"""
-    # Get setting
-    settings = Settings()
-
-    # Setup logger
-    init_loggers(log_level=settings.LOG_LEVEL)
-    log = logging.getLogger("pds_gateway_log")
-    log.info(f"GATEWAY_MODE: {settings.MODE}")
-
-    # Setup app state
-    app.state.cache_data = Cache(settings.CACHE_SIZE, timeparse(settings.TTL))
-    app.state.db = init_db(settings.MONGO_DB_URL, settings.COLLECTION_DB_NAME, log)
-    app.state.adapter = init_adapter(settings.ADAPTER_TYPE, settings.ADAPTER_NAME)
-
-
-async def verify_request(req: Request, settings: Settings = Depends(Settings)) -> Verify:
+async def verify_request(req: Request) -> Verify:
     """Verifies if the request originated from BandChain"""
     # Skip verification if request has already been cached
     if settings.MODE == "production" and app.state.cache_data.get_data(get_band_signature_hash(req.headers)):
@@ -64,9 +58,7 @@ async def verify_request(req: Request, settings: Settings = Depends(Settings)) -
 
 @app.get("/")
 @CollectRequestData(db=app.state.db)
-async def request_data(
-    request: Request, verify: Verify = Depends(verify_request), settings: Settings = Depends(Settings)
-) -> Any:
+async def request_data(request: Request, verify: Verify = Depends(verify_request)) -> Any:
     """Requests data from the premium data source"""
     assert verify
 
@@ -94,7 +86,7 @@ async def request_data(
 
 
 @app.get("/status", response_model_exclude={"user_ip"})
-async def get_status_report(settings: Settings = Depends(Settings)) -> StatusReport:
+async def get_status_report() -> StatusReport:
     """Gets a status report: gateway info, latest request and latest failed request"""
     gateway_info = GatewayInfo(
         allow_data_source_ids=settings.ALLOWED_DATA_SOURCE_IDS,
