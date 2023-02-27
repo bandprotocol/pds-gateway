@@ -1,6 +1,6 @@
 import sys
 from functools import wraps
-from typing import Optional, Any, Callable
+from typing import Optional, Callable, TypeVar
 
 from fastapi import HTTPException, Request
 
@@ -8,11 +8,13 @@ from app.report.db import DB
 from app.report.models import Report, Verify, ProviderResponse
 from app.utils.helper import get_bandchain_params_with_type
 
+R = TypeVar("R")
+
 
 class CollectRequestData:
     """A decorator that collects request data from requests and saves a corresponding to a database."""
 
-    def __init__(self, db: Optional[DB] = None):
+    def __init__(self, db: Optional[DB] = None) -> None:
         """Inits CollectVerifyData with an optional db.
 
         Args:
@@ -20,9 +22,9 @@ class CollectRequestData:
         """
         self.db = db
 
-    def __call__(self, func: Callable[[Request, Verify], Any]):
+    def __call__(self, func: Callable[[Request, Verify], R]) -> R:
         @wraps(func)
-        async def wrapper_collect_request_data(request: Request, verify: Verify):
+        async def wrapper_collect_request_data(request: Request, verify: Verify) -> R:
             res = None
 
             try:
@@ -46,7 +48,6 @@ class CollectRequestData:
                         case _:
                             provider_response = None
 
-
                     client_ip = request.client.host
                     bandchain_params = get_bandchain_params_with_type(request.headers)
 
@@ -64,6 +65,6 @@ class CollectRequestData:
 
                     self.db.save(report)
 
-            return res
+            return None
 
         return wrapper_collect_request_data
