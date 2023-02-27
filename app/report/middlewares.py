@@ -61,7 +61,6 @@ class CollectRequestData:
                         verify=verify,
                         provider_response=provider_response,
                     )
-                    print(report)
 
                     self.db.save(report)
 
