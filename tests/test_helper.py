@@ -1,9 +1,14 @@
 import pytest
-from httpx import Request, Response
 from fastapi import HTTPException
+from httpx import Request, Response
 from pytest_httpx import HTTPXMock
 
-from app.utils.helper import add_params_config, get_bandchain_params, is_allow_data_source_id, verify_request
+from app.utils.helper import (
+    add_max_delay_param,
+    get_bandchain_params,
+    is_data_source_id_allowed,
+    verify_request_from_bandchain,
+)
 
 
 class MockConfig:
@@ -15,6 +20,7 @@ class MockConfig:
 
 
 mock_headers = {
+    "NOT_BAND": "0",
     "BAND_CHAIN_ID": "bandchain",
     "BAND_VALIDATOR": "bandcoolvalidator",
     "BAND_REQUEST_ID": "1",
@@ -39,8 +45,8 @@ def test_get_bandchain_params():
     }
 
 
-def test_add_params_config():
-    params = add_params_config(
+def test_add_max_delay_param():
+    params = add_max_delay_param(
         {
             "chain_id": "bandchain",
             "validator": "bandcoolvalidator",
@@ -64,12 +70,12 @@ def test_add_params_config():
 
 
 def test_is_allow_data_source_id():
-    assert is_allow_data_source_id("1", ["1", "2"])
-    assert not is_allow_data_source_id("3", ["1", "2"])
+    assert is_data_source_id_allowed(1, [1, 2])
+    assert not is_data_source_id_allowed(3, [1, 2])
 
 
 @pytest.mark.asyncio
-async def test_verify_request_success(httpx_mock: HTTPXMock):
+async def test_verify_request_from_bandchain_success(httpx_mock: HTTPXMock):
     expected = {"is_delay": False, "data_source_id": "226"}
 
     # mock response
@@ -88,13 +94,13 @@ async def test_verify_request_success(httpx_mock: HTTPXMock):
 
     httpx_mock.add_callback(custom_response)
 
-    verified = await verify_request(mock_headers, "http://www.mock-url.com", "0")
+    verified = await verify_request_from_bandchain(mock_headers, "https://www.mock-url.com", 0)
 
     assert verified == expected
 
 
 @pytest.mark.asyncio
-async def test_verify_request_failed(httpx_mock: HTTPXMock):
+async def test_verify_request_from_bandchain_failed(httpx_mock: HTTPXMock):
     # mock response
     def custom_response(_: Request):
         return Response(
@@ -105,6 +111,6 @@ async def test_verify_request_failed(httpx_mock: HTTPXMock):
     httpx_mock.add_callback(custom_response)
 
     try:
-        await verify_request(mock_headers, "http://www.mock-url.com", "0")
+        await verify_request_from_bandchain(mock_headers, "https://www.mock-url.com", 0)
     except HTTPException as e:
         assert e.status_code == 500

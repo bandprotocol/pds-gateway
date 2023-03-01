@@ -3,7 +3,6 @@ authors = ["bandprotocol <dev@bandprotocol.com>"]
 description = "Python webserver as a gateway between BandChain validators and premium data API"
 license = "GPL-3.0 license"
 name = "pds-gateway"
-packages = [{include = "pds_gateway"}]
 readme = "README.md"
 version = "0.1.0"
 
@@ -13,7 +12,7 @@ fastapi = "^0.87.0"
 httpx = "^0.23.1"
 motor = "^3.1.1"
 pydantic = "^1.10.2"
-python = "^3.9"
+python = "^3.11"
 python-dotenv = "^0.21.0"
 pytimeparse = "^1.1.8"
 uvicorn = "^0.20.0"

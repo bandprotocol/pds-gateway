@@ -1,33 +1,29 @@
-import uvicorn
 import logging
+
+from uvicorn.logging import DefaultFormatter
 
 FORMAT: str = "%(levelprefix)s %(asctime)s | %(message)s"
 
-app_dict_config = {
-    "formatters": {
-        "basic": {
-            "()": "uvicorn.logging.DefaultFormatter",
-            "format": FORMAT,
-        }
-    }
-}
 
-# code variant:
 def init_loggers(logger_name: str = "pds_gateway_log", log_level: str = "DEBUG"):
-    # create logger
+    """Initializes the logger
+
+    Args:
+        logger_name: Logger name
+        log_level: The log level as a string
+    """
+    # Creates logger
     logger = logging.getLogger(logger_name)
 
     logger.setLevel(log_level)
 
-    # create console handler and set level to debug
+    # Create a console handler and sets the handler log level
     ch = logging.StreamHandler()
     ch.setLevel(log_level)
 
-    # create formatter
-    formatter = uvicorn.logging.DefaultFormatter(FORMAT, datefmt="%Y-%m-%d %H:%M:%S")
-
-    # add formatter to ch
+    # Creates a formatter and adds to the console handler
+    formatter = DefaultFormatter(FORMAT, datefmt="%Y-%m-%d %H:%M:%S")
     ch.setFormatter(formatter)
 
-    # add ch to logger
+    # Adds the console handler to the logger
     logger.addHandler(ch)
