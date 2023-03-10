@@ -1,8 +1,10 @@
-from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
-from typing import Dict
-from datetime import datetime, timezone
-import httpx
 import os
+from datetime import datetime, timezone
+from typing import Dict
+
+import httpx
+
+from adapter.standard_crypto_price.base import StandardCryptoPrice, Input, Output
 
 
 class CoinMarketCap(StandardCryptoPrice):
@@ -223,7 +225,7 @@ class CoinMarketCap(StandardCryptoPrice):
             "PSI": "nexus-protocol",
         }
 
-    async def call(self, input: Input) -> Output:
+    async def call(self, input_: Input) -> Output:
         client = httpx.AsyncClient()
         response = await client.request(
             "GET",
@@ -252,6 +254,4 @@ class CoinMarketCap(StandardCryptoPrice):
             for data in response_json["data"].values()
         ]
 
-        return Output(
-            prices=prices,
-        )
+        return Output(prices=prices)

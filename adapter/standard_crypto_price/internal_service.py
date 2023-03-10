@@ -1,7 +1,8 @@
-import httpx
 import os
 
-from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
+import httpx
+
+from adapter.standard_crypto_price.base import StandardCryptoPrice, Input, Output
 
 
 class InternalService(StandardCryptoPrice):
@@ -11,12 +12,12 @@ class InternalService(StandardCryptoPrice):
     def __init__(self):
         self.api_url = os.getenv("API_URL", None)
 
-    async def call(self, input: Input) -> Output:
+    async def call(self, input_: Input) -> Output:
         client = httpx.AsyncClient()
         response = await client.request(
             "GET",
             self.api_url,
-            params={"symbols": ",".join(input["symbols"])},
+            params={"symbols": ",".join(input_["symbols"])},
         )
 
         response.raise_for_status()
@@ -31,6 +32,4 @@ class InternalService(StandardCryptoPrice):
             for item in response_json["prices"]
         ]
 
-        return Output(
-            prices=prices,
-        )
+        return Output(prices=prices)

@@ -1,10 +1,10 @@
-import httpx
 import os
-from typing import Dict
 from datetime import datetime
+from typing import Dict
 
+import httpx
 
-from adapter.standard_crypto_price import StandardCryptoPrice, Input, Output
+from adapter.standard_crypto_price.base import StandardCryptoPrice, Input, Output
 
 
 class CryptoCompare(StandardCryptoPrice):
@@ -13,20 +13,20 @@ class CryptoCompare(StandardCryptoPrice):
     symbols_map: Dict[str, str] = None
     symbols_map_back: Dict[str, str] = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_key = os.getenv("CRYPTO_COMPARE_API_KEY", None)
         self.symbols_map = {
             "CUSD": "CELOUSD",
         }
         self.symbols_map_back = {v: k for k, v in self.symbols_map.items()}
 
-    async def call(self, input: Input) -> Output:
+    async def call(self, input_: Input) -> Output:
         client = httpx.AsyncClient()
         response = await client.request(
             "GET",
             self.api_url,
             params={
-                "fsyms": ",".join([self.symbols_map.get(symbol, symbol) for symbol in input["symbols"]]),
+                "fsyms": ",".join([self.symbols_map.get(symbol, symbol) for symbol in input_["symbols"]]),
                 "tsyms": "USD",
             },
             headers={"Authorization": f"Apikey " + self.api_key},
@@ -44,6 +44,4 @@ class CryptoCompare(StandardCryptoPrice):
             for symbol, value in response_json.items()
         ]
 
-        return Output(
-            prices=prices,
-        )
+        return Output(prices=prices)
