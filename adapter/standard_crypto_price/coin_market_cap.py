@@ -230,7 +230,7 @@ class CoinMarketCap(StandardCryptoPrice):
         response = await client.request(
             "GET",
             self.api_url,
-            params={"slug": ",".join([self.symbols_map.get(symbol, symbol) for symbol in input["symbols"]])},
+            params={"slug": ",".join([self.symbols_map.get(symbol, symbol) for symbol in input_["symbols"]])},
             headers={
                 "X-CMC_PRO_API_KEY": self.api_key,
             },

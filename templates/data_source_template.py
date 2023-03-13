@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-from typing import List, Dict
-import requests
-import sys
 import os
+import sys
+from typing import List, Dict
 
+import requests
 
 URL = "http://localhost:8000"
 
 
-def set_header_from_env(headers: Dict[str, str], key: str):
-    """
-    Reads values from Yoda Executor's environment variables
+def set_header_from_env(headers: Dict[str, str], key: str) -> None:
+    """Reads values from Yoda Executor's environment variables
+
     Args:
-        headers: header
+        key: Key to set from env.
+        headers: Header.
     """
     value = os.environ.get(key)
     if value is not None:
@@ -20,12 +21,13 @@ def set_header_from_env(headers: Dict[str, str], key: str):
 
 
 def set_request_verification_headers(existing_headers: Dict[str, str]) -> Dict[str, str]:
-    """
-    Create request verification info as HTTP headers
+    """Sets a request verification info as HTTP headers.
+
     Args:
-        existing_headers: existing headers
+        existing_headers: Existing headers.
+
     Returns:
-        request header
+        Request header.
     """
     new_headers = existing_headers.copy()
 
@@ -45,12 +47,13 @@ def set_request_verification_headers(existing_headers: Dict[str, str]) -> Dict[s
 
 
 def get_prices(symbols: List[str]) -> str:
-    """
-    Call the Gateway's URL with symbols to get the prices of symbols
+    """Calls the Gateway's URL along with the requested symbols to retrieve its prices.
+
     Args:
-        symbols: symbols that we want to get the prices
+        symbols: Symbols to get the price of.
+
     Returns:
-        prices field from Gateway's response
+        Prices field from the gateway's response.
     """
     headers = set_request_verification_headers({})
     r = requests.get(f"{URL}", headers=headers, params={"symbols": ",".join(symbols)})

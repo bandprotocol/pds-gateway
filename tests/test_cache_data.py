@@ -31,15 +31,15 @@ def test_cache_data_out_of_capacity(cache_data):
     cache_data.set_data(hash("3"), "data 3 ...")
     cache_data.set_data(hash("4"), "data 4 ...")
 
-    assert cache_data.get_data(hash("1")) == None
+    assert cache_data.get_data(hash("1")) is None
 
 
 def test_cache_data_not_found(cache_data):
-    assert cache_data.get_data(hash("99")) == None
+    assert cache_data.get_data(hash("99")) is None
 
 
 def test_cache_data_expire(cache_data):
     cache_data.set_data(hash("1"), "data ...")
     time.sleep(1.1)
 
-    assert cache_data.get_data(hash("1")) == None
+    assert cache_data.get_data(hash("1")) is None
