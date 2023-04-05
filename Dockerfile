@@ -1,4 +1,4 @@
-FROM python:3.11-alpine AS builder
+FROM python:3.11 AS builder
 ENV PYTHONUNBUFFERED 1
 RUN mkdir app
 WORKDIR  /app

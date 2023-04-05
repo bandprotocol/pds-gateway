@@ -27,3 +27,6 @@ def init_loggers(logger_name: str = "pds_gateway_log", log_level: str = "DEBUG")
 
     # Adds the console handler to the logger
     logger.addHandler(ch)
+
+    log = logging.getLogger("pds_gateway_log")
+    return log

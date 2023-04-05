@@ -1,36 +1,109 @@
+from abc import abstractmethod
 from typing import Optional, Any
 
 from cachetools import TTLCache
+from redis import Redis
 
 
 class Cache:
-    """LRU Cache implementation with per-item time-to-live (TTL) for storing request data."""
-
-    def __init__(self, max_cache_size: float, ttl: float) -> None:
-        """Inits Cache with the cache_size and TTL.
+    @abstractmethod
+    def set(self, key: Any, value: Any) -> None:
+        """Set a value to the cache.
 
         Args:
-            max_cache_size: Maximum cache size.
+            key: Key to set the value to.
+            value: Value to set.
+        """
+        pass
+
+    @abstractmethod
+    def get(self, key: Any) -> Optional[Any]:
+        """Get a value from the cache.
+
+        Args:
+            key: Key to get the value from.
+
+        Returns:
+            Value from the middleware.
+        """
+        pass
+
+
+class LocalCache(Cache):
+    """A local cache.
+
+    Attributes:
+        cache: TTLCache instance to store the data.
+    """
+
+    def __init__(self, max_cache_size: float, ttl: float) -> None:
+        """Initializes LocalCache with the maximum size and TTL.
+
+        Args:
+            max_cache_size: Maximum size.
             ttl: Time to live in seconds for each item.
         """
-        self.data = TTLCache(maxsize=max_cache_size, ttl=ttl)
+        self.cache = TTLCache(maxsize=max_cache_size, ttl=ttl)
 
-    def get_data(self, hash_: int) -> Optional[Any]:
+    def set(self, key: Any, value: Any) -> None:
+        """Sets the cached data.
+
+        Args:
+            key: Key to set the value to.
+            value: Value to set.
+        """
+        self.cache[key] = value
+
+    def get(self, key: Any) -> Optional[Any]:
         """Gets the cached data.
 
         Args:
-            hash_: Band signature hash.
+            key: Key to get the value from.
 
         Returns:
-            The associated data if it exists. If not, returns None.
+            Value from the middleware. None if the key is not found.
         """
-        return self.data.get(hash_, None)
+        return self.cache.get(key, None)
 
-    def set_data(self, hash_: int, data: Any) -> None:
-        """Sets the data to the cache.
+
+class RedisCache(Cache):
+    """A Redis-based cache.
+
+    Attributes:
+        redis: Redis instance to connect with Redis.
+        ttl: Time to live in seconds.
+    """
+
+    def __init__(self, url: str, port: int = 6379, db: int = 0, ttl: int = 60) -> None:
+        """Initializes RedisCache with the Redis URL, port, database, and TTL.
 
         Args:
-            hash_: Band signature hash.
-            data: Associated data to store alongside the hash.
+            url: Redis URL.
+            port: Redis port.
+            db: Redis database.
+            ttl: Time to live in seconds.
         """
-        self.data[hash_] = data
+        self.redis = Redis(host=url, port=port, db=db)
+        self.ttl = ttl
+
+    def set(self, key: Any, value: Any) -> None:
+        """Set a value to the cache
+
+        Args:
+            key: Key to set the value to.
+            value: Value to set.
+        """
+        saved = self.redis.set(key, value)
+        if saved:
+            self.redis.expire(key, self.ttl)
+
+    def get(self, key: Any) -> Optional[Any]:
+        """Get a value from the cache
+
+        Args:
+            key: Key to get the value from.
+
+        Returns:
+            Value from the middleware. None if the key is not found.
+        """
+        return self.redis.get(key)
