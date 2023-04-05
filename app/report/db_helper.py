@@ -21,7 +21,7 @@ def init_db(
     """
     if url and collection_name:
         db = DB(url, collection_name, report_class)
-        log.info(f"DB: Report data is being stored on MongoDB collection {collection_name}.")
+        log.info(f'DB: "{report_class.__name__}" will be stored in MongoDB collection: "{collection_name}".')
         return db
     else:
         log.info(
