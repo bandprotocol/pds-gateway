@@ -7,7 +7,7 @@ from pytimeparse.timeparse import timeparse
 from starlette.requests import Request
 
 from adapter import init_adapter
-from app.config import Settings
+from app.settings import Settings
 from app.exceptions import VerificationFailedError
 from app.middleware import RequestReportMiddleware, RequestCacheMiddleware, SignatureCacheMiddleware
 from app.report import init_db
