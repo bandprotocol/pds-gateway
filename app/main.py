@@ -7,7 +7,7 @@ from pytimeparse.timeparse import timeparse
 from starlette.requests import Request
 
 from adapter import init_adapter
-from app.settings import Settings
+from app.settings import settings
 from app.exceptions import VerificationFailedError
 from app.middleware import RequestReportMiddleware, RequestCacheMiddleware, SignatureCacheMiddleware
 from app.report import init_db
@@ -21,9 +21,6 @@ from app.utils.types import VerifyErrorType
 app = FastAPI()
 request_app = FastAPI()
 report_app = FastAPI()
-
-# Get setting
-settings = Settings()
 
 # Setup logger
 log = init_loggers(log_level=settings.LOG_LEVEL)
