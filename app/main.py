@@ -35,7 +35,7 @@ else:
     cache = None
 
 # Setup report database and middleware
-if db := bool(settings.MONGO_DB_URL) and settings.MODE == "production":
+if db_enabled := bool(settings.MONGO_DB_URL) and settings.MODE == "production":
     request_db = init_db(settings.MONGO_DB_URL, "request", log, RequestReport)
     provider_response_db = init_db(settings.MONGO_DB_URL, "provider", log, ProviderResponseReport)
     verify_db = init_db(settings.MONGO_DB_URL, "verify", log, VerifyReport)
@@ -70,13 +70,15 @@ async def verify_request(req: Request) -> None:
             report.response_code = e.status_code
             report.error_type = e.error_type
             report.error_msg = str(e)
+            raise e
         except Exception as e:
             report.response_code = 500
             report.error_type = VerifyErrorType.UNKNOWN.value
             report.error_msg = str(e)
+            raise e
         finally:
             # Save report to db if db is enabled
-            if db:
+            if db_enabled:
                 verify_db.save(report)
 
 
@@ -101,7 +103,7 @@ async def request_data(request: Request, _: None = Depends(verify_request)) -> A
             detail=str(e),
         )
     finally:
-        if provider_response_db:
+        if db_enabled:
             provider_response_db.save(report)
 
 
@@ -113,7 +115,7 @@ async def get_status_report() -> StatusReport:
         max_delay_verification=settings.MAX_DELAY_VERIFICATION,
     )
 
-    if db:
+    if db_enabled:
         try:
             reports = await asyncio.gather(
                 request_db.get_latest_report(),
@@ -140,7 +142,7 @@ async def get_failed_status_report() -> StatusReport:
         max_delay_verification=settings.MAX_DELAY_VERIFICATION,
     )
 
-    if db:
+    if db_enabled:
         try:
             reports = await asyncio.gather(
                 provider_response_db.get_latest_failed_report(),
