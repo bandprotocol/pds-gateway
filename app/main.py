@@ -47,7 +47,7 @@ adapter = init_adapter(settings.ADAPTER_TYPE, settings.ADAPTER_NAME)
 
 # Setup caching middleware
 if cache and settings.MODE == "production":
-    request_app.add_middleware(RequestCacheMiddleware, cache=cache)
+    request_app.add_middleware(RequestCacheMiddleware, cache=cache, timeout=timeparse(settings.PENDING_TIMEOUT))
     request_app.add_middleware(SignatureCacheMiddleware, cache=cache)
 
 

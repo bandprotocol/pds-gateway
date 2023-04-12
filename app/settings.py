@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # Cache
     CACHE_TYPE: CACHE_TYPES = "local"
     TTL: str = "10m"
+    PENDING_TIMEOUT: str = "30s"
 
     # For local cache
     CACHE_SIZE: int = 1000

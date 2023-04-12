@@ -1,3 +1,4 @@
+import asyncio
 import json
 import time
 
@@ -56,7 +57,7 @@ class RequestCacheMiddleware:
                                 break
                             case "pending":
                                 # If the state is pending, wait for 0.1 seconds.
-                                time.sleep(0.1)
+                                await asyncio.sleep(0.1)
                                 pass
             else:
                 # If the key is not in the cache, set the state to pending and cache it.
