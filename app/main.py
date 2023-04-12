@@ -7,11 +7,11 @@ from pytimeparse.timeparse import timeparse
 from starlette.requests import Request
 
 from adapter import init_adapter
-from app.settings import settings
 from app.exceptions import VerificationFailedError
 from app.middleware import RequestReportMiddleware, RequestCacheMiddleware, SignatureCacheMiddleware
 from app.report import init_db
 from app.report.models import Reports, GatewayInfo, VerifyReport, ProviderResponseReport, RequestReport
+from app.settings import settings
 from app.utils.cache import LocalCache, RedisCache
 from app.utils.helper import is_data_source_id_allowed, verify_request_from_bandchain
 from app.utils.log_config import init_loggers
