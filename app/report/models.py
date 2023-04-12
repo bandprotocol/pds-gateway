@@ -18,6 +18,11 @@ class BaseModel(PydanticBaseModel):
         orm_mode = True
 
 
+class GatewayInfo(BaseModel):
+    allow_data_source_ids: list[int]
+    max_delay_verification: int
+
+
 class Report(BaseModel):
     pass
 
@@ -46,13 +51,7 @@ class RequestReport(Report):
     created_at: datetime = Field(default=datetime.utcnow())
 
 
-class GatewayInfo(BaseModel):
-    allow_data_source_ids: list[int]
-    max_delay_verification: int
-
-
-class StatusReport(BaseModel):
-    gateway_info: GatewayInfo
+class Reports(Report):
     latest_request: Optional[Dict[str, Any]]
     latest_response: Optional[Dict[str, Any]]
     latest_verify: Optional[Dict[str, Any]]

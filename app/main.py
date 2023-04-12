@@ -11,7 +11,7 @@ from app.settings import settings
 from app.exceptions import VerificationFailedError
 from app.middleware import RequestReportMiddleware, RequestCacheMiddleware, SignatureCacheMiddleware
 from app.report import init_db
-from app.report.models import StatusReport, GatewayInfo, VerifyReport, ProviderResponseReport, RequestReport
+from app.report.models import Reports, GatewayInfo, VerifyReport, ProviderResponseReport, RequestReport
 from app.utils.cache import LocalCache, RedisCache
 from app.utils.helper import is_data_source_id_allowed, verify_request_from_bandchain
 from app.utils.log_config import init_loggers
@@ -20,7 +20,8 @@ from app.utils.types import VerifyErrorType
 # Setup apps
 app = FastAPI()
 request_app = FastAPI()
-report_app = FastAPI()
+info_app = FastAPI()
+reports_app = FastAPI()
 
 # Setup logger
 log = init_loggers(log_level=settings.LOG_LEVEL)
@@ -107,14 +108,18 @@ async def request_data(request: Request, _: None = Depends(verify_request)) -> A
             provider_response_db.save(report)
 
 
-@report_app.get("/latest")
-async def get_status_report() -> StatusReport:
-    """Gets a status report that contains the latest reports"""
-    gateway_info = GatewayInfo(
+@info_app.get("/")
+async def get_info() -> GatewayInfo:
+    """Gets the status of the gateway"""
+    return GatewayInfo(
         allow_data_source_ids=settings.ALLOWED_DATA_SOURCE_IDS,
         max_delay_verification=settings.MAX_DELAY_VERIFICATION,
     )
 
+
+@reports_app.get("/latest")
+async def get_status_report() -> Reports:
+    """Gets a status report that contains the latest reports"""
     if db_enabled:
         try:
             reports = await asyncio.gather(
@@ -122,8 +127,7 @@ async def get_status_report() -> StatusReport:
                 provider_response_db.get_latest_report(),
                 verify_db.get_latest_report(),
             )
-            return StatusReport(
-                gateway_info=gateway_info,
+            return Reports(
                 latest_request=reports[0].to_dict() if reports[0] else None,
                 latest_response=reports[1].to_dict() if reports[1] else None,
                 latest_verify=reports[2].to_dict() if reports[2] else None,
@@ -131,16 +135,12 @@ async def get_status_report() -> StatusReport:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"{e}")
     else:
-        return StatusReport(gateway_info=gateway_info)
+        raise HTTPException(status_code=501, detail="Reports are not enabled")
 
 
-@report_app.get("/latest_failed")
-async def get_failed_status_report() -> StatusReport:
+@reports_app.get("/latest_failed")
+async def get_failed_status_report() -> Reports:
     """Gets a status report that contains the latest failed reports"""
-    gateway_info = GatewayInfo(
-        allow_data_source_ids=settings.ALLOWED_DATA_SOURCE_IDS,
-        max_delay_verification=settings.MAX_DELAY_VERIFICATION,
-    )
 
     if db_enabled:
         try:
@@ -149,17 +149,17 @@ async def get_failed_status_report() -> StatusReport:
                 verify_db.get_latest_failed_report(),
             )
 
-            return StatusReport(
-                gateway_info=gateway_info,
+            return Reports(
                 latest_response=reports[0].to_dict() if reports[0] else None,
                 latest_verify=reports[1].to_dict() if reports[1] else None,
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"{e}")
     else:
-        return StatusReport(gateway_info=gateway_info)
+        raise HTTPException(status_code=501, detail="Reports are not enabled")
 
 
 # Setup Paths
 app.mount("/request", request_app)
-app.mount("/report", report_app)
+app.mount("/info", info_app)
+app.mount("/reports", reports_app)
