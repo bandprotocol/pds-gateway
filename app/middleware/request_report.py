@@ -25,23 +25,28 @@ class RequestReportMiddleware:
         self.db = db
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        request = Request(scope)
-        bandchain_params = get_bandchain_params_with_type(request.headers)
+        if scope["type"] == "http":
+            request = Request(scope)
+            bandchain_params = get_bandchain_params_with_type(request.headers)
 
-        report = RequestReport(
-            user_ip=request.client.host,
-            reporter_address=bandchain_params.get("reporter", None),
-            validator_address=bandchain_params.get("validator", None),
-            request_id=bandchain_params.get("request_id", None),
-            data_source_id=bandchain_params.get("data_source_id", None),
-            external_id=bandchain_params.get("external_id", None),
-        )
+            report = RequestReport(
+                user_ip=request.client.host,
+                reporter_address=bandchain_params.get("reporter", None),
+                validator_address=bandchain_params.get("validator", None),
+                request_id=bandchain_params.get("request_id", None),
+                data_source_id=bandchain_params.get("data_source_id", None),
+                external_id=bandchain_params.get("external_id", None),
+            )
 
-        try:
-            await self.app(scope, receive, send)
-            return
-        except Exception as e:
-            report.error_msg = str(e)
-        finally:
-            # Saves the report to the database.
-            self.db.save(report)
+            try:
+                await self.app(scope, receive, send)
+                return
+            except Exception as e:
+                report.error_msg = str(e)
+            finally:
+                # Saves the report to the database.
+                self.db.save(report)
+
+        # Do nothing if the scope type is not http.
+        await self.app(scope, receive, send)
+

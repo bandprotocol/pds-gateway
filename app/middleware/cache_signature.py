@@ -50,3 +50,6 @@ class SignatureCacheMiddleware:
                 return
             except HTTPException as e:
                 raise e
+
+        # Do nothing if the scope type is not http.
+        await self.app(scope, receive, send)

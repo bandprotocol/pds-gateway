@@ -1,4 +1,5 @@
 import json
+import time
 
 from fastapi import HTTPException
 from starlette.requests import Request
@@ -10,9 +11,10 @@ from app.utils.helper import get_bandchain_params_with_type
 
 
 class RequestCacheMiddleware:
-    def __init__(self, app: ASGIApp, cache: Cache) -> None:
+    def __init__(self, app: ASGIApp, cache: Cache, timeout: int) -> None:
         self.app = app
         self.cache = cache
+        self.timeout = timeout
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         async def cache_response(message: Message) -> None:
@@ -22,7 +24,7 @@ class RequestCacheMiddleware:
                 message: Message object.
             """
             if message["type"] == "http.response.body":
-                self.cache.set(key, json.loads(message["body"].decode()))
+                self.cache.set(key, {"state": "success", "data": json.loads(message["body"].decode())})
             await send(message)
 
         if scope["type"] == "http":
@@ -39,14 +41,33 @@ class RequestCacheMiddleware:
 
             # If the key is not in the cache, get the response from the request and cache it.
             key = hash((rid, eid))
-            if data := self.cache.get(key):
-                # If the key is in the cache, return the cached response.
-                await JSONResponse(content=data, status_code=200)(scope, receive, send)
-                return
+            if cached := self.cache.get(key):
+                if cached["state"] == "pending":
+                    timeout_timestamp = time.time() + self.timeout
+                    # If the state is pending, wait until the state is changed to success or failed or timeout occurs.
+                    while cached := self.cache.get(key) or time.time() < timeout_timestamp:
+                        match cached["state"]:
+                            case "success":
+                                # If the state is success, return the cached response.
+                                await JSONResponse(content=cached["data"], status_code=200)(scope, receive, send)
+                                return
+                            case "failed":
+                                # If the state is failed, attempt to request again.
+                                break
+                            case "pending":
+                                # If the state is pending, wait for 0.1 seconds.
+                                time.sleep(0.1)
+                                pass
+            else:
+                # If the key is not in the cache, set the state to pending and cache it.
+                self.cache.set(key, {"state": "pending", "data": None})
 
-            # If the key is not in the cache, get the response from the request and cache it.
             try:
                 await self.app(scope, receive, cache_response)
                 return
             except HTTPException as e:
+                self.cache.set(key, {"state": "failed", "data": None})
                 raise e
+
+        # Do nothing if the scope is not http.
+        await self.app(scope, receive, send)
