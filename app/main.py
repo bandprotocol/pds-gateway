@@ -110,7 +110,7 @@ async def request_data(request: Request, _: None = Depends(verify_request)) -> A
 
 @info_app.get("/")
 async def get_info() -> GatewayInfo:
-    """Gets the status of the gateway"""
+    """Gets the gateway info"""
     return GatewayInfo(
         allow_data_source_ids=settings.ALLOWED_DATA_SOURCE_IDS,
         max_delay_verification=settings.MAX_DELAY_VERIFICATION,
@@ -119,7 +119,7 @@ async def get_info() -> GatewayInfo:
 
 @reports_app.get("/latest")
 async def get_status_report() -> Reports:
-    """Gets a status report that contains the latest reports"""
+    """Gets the latest reports"""
     if db_enabled:
         try:
             reports = await asyncio.gather(
@@ -140,8 +140,7 @@ async def get_status_report() -> Reports:
 
 @reports_app.get("/latest_failed")
 async def get_failed_status_report() -> Reports:
-    """Gets a status report that contains the latest failed reports"""
-
+    """Gets the latest failed reports"""
     if db_enabled:
         try:
             reports = await asyncio.gather(
