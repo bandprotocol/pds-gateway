@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field
@@ -18,37 +18,40 @@ class BaseModel(PydanticBaseModel):
         orm_mode = True
 
 
-class Verify(BaseModel):
-    response_code: int
-    is_delay: Optional[bool]
-    error_type: Optional[str]
-    error_msg: Optional[str]
-
-
-class ProviderResponse(BaseModel):
-    response_code: int
-    error_msg: Optional[Any]
-
-
-class Report(BaseModel):
-    user_ip: str = Field(..., exclude=True)
-    reporter_address: Optional[str]
-    validator_address: Optional[str]
-    request_id: Optional[int]
-    data_source_id: Optional[int]
-    external_id: Optional[int]
-    cached_data: Optional[bool]
-    verify: Verify
-    provider_response: Optional[ProviderResponse]
-    created_at: datetime = Field(default=datetime.utcnow())
-
-
 class GatewayInfo(BaseModel):
     allow_data_source_ids: list[int]
     max_delay_verification: int
 
 
-class StatusReport(BaseModel):
-    gateway_info: GatewayInfo
-    latest_request: Optional[Report]
-    latest_failed_request: Optional[Report]
+class Report(BaseModel):
+    pass
+
+
+class VerifyReport(Report):
+    response_code: int
+    is_delay: Optional[bool]
+    error_type: Optional[str]
+    error_msg: Optional[str]
+    created_at: datetime = Field(default=datetime.utcnow())
+
+
+class ProviderResponseReport(Report):
+    response_code: int
+    error_msg: Optional[str]
+    created_at: datetime = Field(default=datetime.utcnow())
+
+
+class RequestReport(Report):
+    user_ip: Optional[str]
+    reporter_address: Optional[str]
+    validator_address: Optional[str]
+    request_id: Optional[int]
+    data_source_id: Optional[int]
+    external_id: Optional[int]
+    created_at: datetime = Field(default=datetime.utcnow())
+
+
+class Reports(Report):
+    latest_request: Optional[Dict[str, Any]]
+    latest_response: Optional[Dict[str, Any]]
+    latest_verify: Optional[Dict[str, Any]]

@@ -1,11 +1,12 @@
 import logging
+from logging import Logger
 
 from uvicorn.logging import DefaultFormatter
 
 FORMAT: str = "%(levelprefix)s %(asctime)s | %(message)s"
 
 
-def init_loggers(logger_name: str = "pds_gateway_log", log_level: str = "DEBUG"):
+def init_loggers(logger_name: str = "pds_gateway_log", log_level: str = "DEBUG") -> Logger:
     """Initializes the logger
 
     Args:
@@ -27,3 +28,4 @@ def init_loggers(logger_name: str = "pds_gateway_log", log_level: str = "DEBUG")
 
     # Adds the console handler to the logger
     logger.addHandler(ch)
+    return logger

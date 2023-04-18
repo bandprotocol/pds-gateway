@@ -1,10 +1,9 @@
 import re
+from typing import List, Mapping, Any, TypedDict, Optional
 
-from typing import List, Mapping, Any
-
-from fastapi import HTTPException
 from httpx import AsyncClient, HTTPStatusError
 
+from app.exceptions import VerificationFailedError
 from app.utils.types import VerifyErrorType
 
 
@@ -31,7 +30,7 @@ def get_bandchain_params_with_type(headers: Mapping[str, Any]) -> dict[str, Any]
         A dictionary containing BandChain's parameters
     """
     params = get_bandchain_params(headers)
-    for k, v in params:
+    for k, v in params.items():
         if k in ["request_id", "data_source_id", "external_id"]:
             params[k] = int(v)
     return params
@@ -67,7 +66,7 @@ async def verify_request_from_bandchain(
     headers: Mapping[str, str],
     verify_request_url: str,
     max_delay_verification: int,
-) -> dict[str, Any]:
+) -> TypedDict("Verify", {"is_delay": bool, "data_source_id": Optional[int]}):
     """Verifies if the request came from BandChain
 
     Args:
@@ -100,14 +99,17 @@ async def verify_request_from_bandchain(
 
         return {"is_delay": body.get("is_delay", False), "data_source_id": body.get("data_source_id", None)}
     except HTTPStatusError as e:
-        raise HTTPException(
-            status_code=e.response.status_code,
-            detail={"verify_error_type": VerifyErrorType.FAILED_VERIFICATION.value, "error_msg": f"{e}"},
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail={"verify_error_type": VerifyErrorType.SERVER_ERROR.value, "error_msg": f"{e}"}
-        )
+        status_code = e.response.status_code
+        if re.match(str(status_code), r"4[\d]{2}"):
+            raise VerificationFailedError(
+                status_code=status_code,
+                error_type=VerifyErrorType.FAILED_VERIFICATION.value,
+            )
+        elif re.match(str(status_code), r"5[\d]{2}"):
+            raise VerificationFailedError(
+                status_code=status_code,
+                error_type=VerifyErrorType.UNKNOWN.value,
+            )
 
 
 def is_data_source_id_allowed(data_source_id: int, allowed_data_source_ids: List[int]) -> bool:
