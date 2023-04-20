@@ -37,9 +37,9 @@ else:
 
 # Setup report database and middleware
 if db_enabled := bool(settings.MONGO_DB_URL) and settings.MODE == "production":
-    request_db = init_db(settings.MONGO_DB_URL, "request", log, RequestReport)
-    provider_response_db = init_db(settings.MONGO_DB_URL, "provider", log, ProviderResponseReport)
-    verify_db = init_db(settings.MONGO_DB_URL, "verify", log, VerifyReport)
+    request_db = init_db(settings.MONGO_DB_URL, f"{settings.COLLECTION_DB_NAME}-request", log, RequestReport)
+    provider_response_db = init_db(settings.MONGO_DB_URL, f"{settings.COLLECTION_DB_NAME}-provider", log, ProviderResponseReport)
+    verify_db = init_db(settings.MONGO_DB_URL, f"{settings.COLLECTION_DB_NAME}-verify", log, VerifyReport)
     request_app.add_middleware(RequestReportMiddleware, db=request_db)
 
 # Setup adapter
