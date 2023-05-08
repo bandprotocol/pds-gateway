@@ -15,7 +15,7 @@ services:
       # FOR VERIFICATION
       - VERIFY_REQUEST_URL=${VERIFY_REQUEST_URL:-https://laozi-testnet6.bandchain.org/api/oracle/v1/verify_request}
       - ALLOWED_DATA_SOURCE_IDS=${ALLOWED_DATA_SOURCE_IDS:-}
-      - CACHE_SIZE==${CACHE_SIZE:-1000}
+      - CACHE_SIZE=${CACHE_SIZE:-1000}
       # FOR ADAPTER
       - ADAPTER_TYPE=${ADAPTER_TYPE:-}
       - ADAPTER_NAME=${ADAPTER_NAME:-}
