@@ -14,7 +14,7 @@ class CryptoCompare(StandardCryptoPrice):
     symbols_map_back: Dict[str, str] = None
 
     def __init__(self) -> None:
-        self.api_key = os.getenv("CRYPTO_COMPARE_API_KEY", None)
+        self.api_key = os.getenv("API_KEY", None)
         self.symbols_map = {
             "CUSD": "CELOUSD",
         }
