@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     # Database
     MONGO_DB_URL: str = None
     COLLECTION_DB_NAME: str = None
-    MONGO_DB_EXPIRATION_TIME: int = 60 * 60 * 24 * 3  # 3 days
+    MONGO_DB_EXPIRATION_TIME: int = None
 
     class Config:
         env_file = ".env"
