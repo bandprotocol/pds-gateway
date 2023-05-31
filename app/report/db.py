@@ -27,6 +27,9 @@ class DB:
 
         if expiration_time:
             self.create_index_for_expiration(expiration_time)
+        else:
+            # Reset expiration to No Expiration by dropping the created_at index
+            self.report.drop_indexes()
 
     async def get_latest_report(self) -> Optional[Report]:
         """Gets the latest request information from the database.
