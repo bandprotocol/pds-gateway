@@ -1,3 +1,4 @@
+from datetime import datetime
 from starlette.requests import Request
 from starlette.types import ASGIApp, Scope, Receive, Send
 
@@ -36,6 +37,7 @@ class RequestReportMiddleware:
                 request_id=bandchain_params.get("request_id", None),
                 data_source_id=bandchain_params.get("data_source_id", None),
                 external_id=bandchain_params.get("external_id", None),
+                created_at=datetime.utcnow(),
             )
 
             try:
@@ -49,4 +51,3 @@ class RequestReportMiddleware:
 
         # Do nothing if the scope type is not http.
         await self.app(scope, receive, send)
-

@@ -1,5 +1,6 @@
 import asyncio
 from typing import Any
+from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Depends
 from httpx import HTTPStatusError
@@ -36,10 +37,29 @@ else:
     cache = None
 
 # Setup report database and middleware
-if db_enabled := bool(settings.MONGO_DB_URL) and settings.MODE == "production":
-    request_db = init_db(settings.MONGO_DB_URL, f"{settings.COLLECTION_DB_NAME}-request", log, RequestReport)
-    provider_response_db = init_db(settings.MONGO_DB_URL, f"{settings.COLLECTION_DB_NAME}-provider", log, ProviderResponseReport)
-    verify_db = init_db(settings.MONGO_DB_URL, f"{settings.COLLECTION_DB_NAME}-verify", log, VerifyReport)
+# if db_enabled := bool(settings.MONGO_DB_URL) and settings.MODE == "production":
+if db_enabled := bool(settings.MONGO_DB_URL):
+    request_db = init_db(
+        settings.MONGO_DB_URL,
+        f"{settings.COLLECTION_DB_NAME}-request",
+        settings.MONGO_DB_EXPIRATION_TIME,
+        log,
+        RequestReport,
+    )
+    provider_response_db = init_db(
+        settings.MONGO_DB_URL,
+        f"{settings.COLLECTION_DB_NAME}-provider",
+        settings.MONGO_DB_EXPIRATION_TIME,
+        log,
+        ProviderResponseReport,
+    )
+    verify_db = init_db(
+        settings.MONGO_DB_URL,
+        f"{settings.COLLECTION_DB_NAME}-verify",
+        settings.MONGO_DB_EXPIRATION_TIME,
+        log,
+        VerifyReport,
+    )
     request_app.add_middleware(RequestReportMiddleware, db=request_db)
 
 # Setup adapter
@@ -54,7 +74,10 @@ if cache and settings.MODE == "production":
 async def verify_request(req: Request) -> None:
     """Verifies if the request originated from BandChain"""
     if settings.MODE == "production":
-        report = VerifyReport(response_code=200)
+        report = VerifyReport(
+            response_code=200,
+            created_at=datetime.utcnow(),
+        )
         try:
             verify = await verify_request_from_bandchain(
                 req.headers, settings.VERIFY_REQUEST_URL, settings.MAX_DELAY_VERIFICATION
@@ -86,7 +109,10 @@ async def verify_request(req: Request) -> None:
 @request_app.get("/")
 async def request_data(request: Request, _: None = Depends(verify_request)) -> Any:
     """Requests data from the premium data source"""
-    report = ProviderResponseReport(response_code=200)
+    report = ProviderResponseReport(
+        response_code=200,
+        created_at=datetime.utcnow(),
+    )
     try:
         return await adapter.unified_call(dict(request.query_params))
     except HTTPStatusError as e:
