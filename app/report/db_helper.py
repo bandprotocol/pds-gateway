@@ -8,9 +8,10 @@ from app.report.models import Report
 def init_db(
     url: Optional[str],
     collection_name: Optional[str],
-    expiration_time: int,
     log: Logger,
     report_class: Callable[..., Report],
+    *,
+    expiration_time: Optional[int] = None,
 ) -> Optional[DB]:
     """Initializes the database if the URL and collection name are provided.
 
@@ -24,7 +25,7 @@ def init_db(
         The DB instance if the url and collection_name are provided, or None if not.
     """
     if url and collection_name:
-        db = DB(url, collection_name, expiration_time, report_class)
+        db = DB(url, collection_name, report_class, expiration_time=expiration_time)
         log.info(f'DB: "{report_class.__name__}" will be stored in MongoDB collection: "{collection_name}".')
         return db
     else:

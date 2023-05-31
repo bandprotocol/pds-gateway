@@ -14,7 +14,7 @@ class DB:
     """
 
     def __init__(
-        self, mongo_db_url: str, db_name: str, expiration_time: int, report_class: Callable[..., Report]
+        self, mongo_db_url: str, db_name: str, report_class: Callable[..., Report], *, expiration_time: Optional[int] = None
     ) -> None:
         """Initializes DB with the MongoDB URL and database name.
 
@@ -24,7 +24,9 @@ class DB:
         """
         self.report = motor_asyncio.AsyncIOMotorClient(mongo_db_url)[db_name].get_collection("report")
         self.report_class = report_class
-        self.create_index_for_expiration(expiration_time)
+
+        if expiration_time:
+            self.create_index_for_expiration(expiration_time)
 
     async def get_latest_report(self) -> Optional[Report]:
         """Gets the latest request information from the database.
