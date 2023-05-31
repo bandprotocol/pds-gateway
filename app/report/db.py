@@ -73,6 +73,6 @@ class DB:
         Args:
             expiration_time (int): The time in seconds after which the documents will expire.
         """
-        # Drop all indexes that exists before creating a new one
+        # Drop all indexes that exist before creating a new one
         self.report.drop_indexes()
         self.report.create_index([("created_at", pymongo.ASCENDING)], expireAfterSeconds=expiration_time)
