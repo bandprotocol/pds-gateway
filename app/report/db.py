@@ -1,3 +1,4 @@
+import pymongo
 from typing import Optional, Callable
 
 from motor import motor_asyncio
@@ -12,7 +13,9 @@ class DB:
         report: AsyncIOMotorClient instance to connect with MongoDB and get the "report" collection.
     """
 
-    def __init__(self, mongo_db_url: str, db_name: str, report_class: Callable[..., Report]) -> None:
+    def __init__(
+        self, mongo_db_url: str, db_name: str, report_class: Callable[..., Report], *, expiration_time: Optional[int] = None
+    ) -> None:
         """Initializes DB with the MongoDB URL and database name.
 
         Args:
@@ -21,6 +24,12 @@ class DB:
         """
         self.report = motor_asyncio.AsyncIOMotorClient(mongo_db_url)[db_name].get_collection("report")
         self.report_class = report_class
+
+        if expiration_time:
+            self.create_index_for_expiration(expiration_time)
+        else:
+            # Reset expiration to No Expiration by dropping the created_at index
+            self.report.drop_indexes()
 
     async def get_latest_report(self) -> Optional[Report]:
         """Gets the latest request information from the database.
@@ -62,3 +71,13 @@ class DB:
             report: The Report object to be saved.
         """
         self.report.insert_one(report.to_dict())
+
+    def create_index_for_expiration(self, expiration_time: int) -> None:
+        """Creates an index for the report collection to expire documents after a given time.
+
+        Args:
+            expiration_time (int): The time in seconds after which the documents will expire.
+        """
+        # Drop all indexes that exist before creating a new one
+        self.report.drop_indexes()
+        self.report.create_index([("created_at", pymongo.ASCENDING)], expireAfterSeconds=expiration_time)
