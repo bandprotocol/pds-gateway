@@ -32,13 +32,13 @@ class VerifyReport(Report):
     is_delay: Optional[bool]
     error_type: Optional[str]
     error_msg: Optional[str]
-    created_at: datetime = Field(default=datetime.utcnow())
+    created_at: datetime
 
 
 class ProviderResponseReport(Report):
     response_code: int
     error_msg: Optional[str]
-    created_at: datetime = Field(default=datetime.utcnow())
+    created_at: datetime
 
 
 class RequestReport(Report):
@@ -48,7 +48,7 @@ class RequestReport(Report):
     request_id: Optional[int]
     data_source_id: Optional[int]
     external_id: Optional[int]
-    created_at: datetime = Field(default=datetime.utcnow())
+    created_at: datetime
 
 
 class Reports(Report):

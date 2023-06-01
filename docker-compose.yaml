@@ -21,5 +21,9 @@ services:
       - ADAPTER_NAME=${ADAPTER_NAME:-}
       # FOR CALLING API
       - API_KEY=${API_KEY:-}
+      # FOR DATABASE
+      - MONGO_DB_URL=${MONGO_DB_URL:-}
+      - COLLECTION_DB_NAME=${COLLECTION_DB_NAME:-}
+      - MONGO_DB_EXPIRATION_TIME=${MONGO_DB_EXPIRATION_TIME:-}
     volumes:
       - .:/app
