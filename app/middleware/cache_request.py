@@ -45,6 +45,8 @@ class RequestCacheMiddleware:
             if self.cache.get(key):
                 timeout_timestamp = time.time() + self.timeout
 
+                # While the key is in the cache or response timeout has not been exceeded, 
+                # check the state of the response and return the cached response.
                 while cached := self.cache.get(key) or time.time() < timeout_timestamp:
                     match cached["state"]:
                         case "success":
