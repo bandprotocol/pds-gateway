@@ -25,7 +25,7 @@ class RequestCacheMiddleware:
                 message: Message object.
             """
             if message["type"] == "http.response.body":
-                self.cache.set(key, {"state": "success", "data": json.loads(message["body"].decode())})
+                self.cache.set(key, {"state": "success", "data": message["body"].decode()})
             await send(message)
 
         if scope["type"] == "http":
@@ -51,7 +51,8 @@ class RequestCacheMiddleware:
                     match cached["state"]:
                         case "success":
                             # If the state is success, return the cached response.
-                            await JSONResponse(content=cached["data"], status_code=200)(scope, receive, send)
+                            data = json.loads(cached["data"])
+                            await JSONResponse(content=data, status_code=200)(scope, receive, send)
                             return
                         case "failed":
                             # If the state is failed, attempt to request again.
@@ -68,6 +69,11 @@ class RequestCacheMiddleware:
                 await self.app(scope, receive, cache_response)
                 return
             except HTTPException as e:
+                # Return if the state has previously been set to success.
+                if self.cache.get(key)["state"] == "success":
+                    return
+                
+                # Otherwise set the state to failed and raise the exception.
                 self.cache.set(key, {"state": "failed", "data": None})
                 raise e
 

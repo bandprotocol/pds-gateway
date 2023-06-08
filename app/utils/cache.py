@@ -93,7 +93,7 @@ class RedisCache(Cache):
             key: Key to set the value to.
             value: Value to set.
         """
-        saved = self.redis.set(key, value)
+        saved = self.redis.hset(key, value)
         if saved:
             self.redis.expire(key, self.ttl)
 
@@ -106,4 +106,4 @@ class RedisCache(Cache):
         Returns:
             Value from the middleware. None if the key is not found.
         """
-        return self.redis.get(key)
+        return self.redis.hget(key)
