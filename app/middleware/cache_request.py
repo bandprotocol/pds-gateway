@@ -69,8 +69,11 @@ class RequestCacheMiddleware:
                 await self.app(scope, receive, cache_response)
                 return
             except HTTPException as e:
-                # Return if the state has previously been set to success.
-                if self.cache.get(key)["state"] == "success":
+                # Check if any pending responses has been succesfully cached.
+                cached = self.cache.get(key)
+                if cached and cached["state"] == "success":
+                    data = json.loads(cached["data"])
+                    await JSONResponse(content=data, status_code=200)(scope, receive, send)
                     return
                 
                 # Otherwise set the state to failed and raise the exception.
