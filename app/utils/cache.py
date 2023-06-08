@@ -7,7 +7,7 @@ from redis import Redis
 
 class Cache:
     @abstractmethod
-    def set(self, key: Any, value: Any) -> None:
+    def set(self, key: str, value: dict) -> None:
         """Set a value to the cache.
 
         Args:
@@ -17,7 +17,7 @@ class Cache:
         pass
 
     @abstractmethod
-    def get(self, key: Any) -> Optional[Any]:
+    def get(self, key: str) -> Optional[dict]:
         """Get a value from the cache.
 
         Args:
@@ -45,7 +45,7 @@ class LocalCache(Cache):
         """
         self.cache = TTLCache(maxsize=max_cache_size, ttl=ttl)
 
-    def set(self, key: Any, value: Any) -> None:
+    def set(self, key: str, value: dict) -> None:
         """Sets the cached data.
 
         Args:
@@ -54,7 +54,7 @@ class LocalCache(Cache):
         """
         self.cache[key] = value
 
-    def get(self, key: Any) -> Optional[Any]:
+    def get(self, key: str) -> Optional[dict]:
         """Gets the cached data.
 
         Args:
@@ -86,18 +86,18 @@ class RedisCache(Cache):
         self.redis = Redis(host=url, port=port, db=db)
         self.ttl = ttl
 
-    def set(self, key: Any, value: Any) -> None:
+    def set(self, key: str, value: dict) -> None:
         """Set a value to the cache
 
         Args:
             key: Key to set the value to.
             value: Value to set.
         """
-        saved = self.redis.hset(key, value)
+        saved = self.redis.hset(name=key, mapping=value)
         if saved:
             self.redis.expire(key, self.ttl)
 
-    def get(self, key: Any) -> Optional[Any]:
+    def get(self, key: str) -> Optional[dict]:
         """Get a value from the cache
 
         Args:
