@@ -33,11 +33,18 @@
 - To setup gateway for CoinmarketCap price API, you have to setup these environments:
   - ADAPTER_TYPE = "standard_crypto_price"
   - ADAPTER_NAME = "coin_market_cap"
-  - COIN_MARKET_CAP_API_KEY = <YOUR_API_KEY>
+  - API_KEY = <YOUR_COIN_MARKET_CAP_API_KEY>
 
 ### CryptoCompare
 
 - To setup gateway for CryptoCompare price API, you have to setup these environments:
   - ADAPTER_TYPE = "standard_crypto_price"
   - ADAPTER_NAME = "crypto_compare"
-  - CRYPTO_COMPARE_API_KEY = <YOUR_API_KEY>
+  - API_KEY = <YOUR_CRYPTO_COMPARE_API_KEY>
+  - 
+### CoinGecko
+
+- To setup gateway for CoinGecko price API, you have to setup these environments:
+  - ADAPTER_TYPE = "standard_crypto_price"
+  - ADAPTER_NAME = "coin_gecko"
+  - API_KEY = <YOUR_COIN_GECKO_API_KEY>

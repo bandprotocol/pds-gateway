@@ -42,23 +42,24 @@ class RequestCacheMiddleware:
 
             # If the key is not in the cache, get the response from the request and cache it.
             key = hash((rid, eid))
-            if cached := self.cache.get(key):
-                if cached["state"] == "pending":
-                    timeout_timestamp = time.time() + self.timeout
-                    # If the state is pending, wait until the state is changed to success or failed or timeout occurs.
-                    while cached := self.cache.get(key) or time.time() < timeout_timestamp:
-                        match cached["state"]:
-                            case "success":
-                                # If the state is success, return the cached response.
-                                await JSONResponse(content=cached["data"], status_code=200)(scope, receive, send)
-                                return
-                            case "failed":
-                                # If the state is failed, attempt to request again.
-                                break
-                            case "pending":
-                                # If the state is pending, wait for 0.1 seconds.
-                                await asyncio.sleep(0.1)
-                                pass
+            if self.cache.get(key):
+                timeout_timestamp = time.time() + self.timeout
+
+                # While the key is in the cache or response timeout has not been exceeded, 
+                # check the state of the response and return the cached response.
+                while cached := self.cache.get(key) or time.time() < timeout_timestamp:
+                    match cached["state"]:
+                        case "success":
+                            # If the state is success, return the cached response.
+                            await JSONResponse(content=cached["data"], status_code=200)(scope, receive, send)
+                            return
+                        case "failed":
+                            # If the state is failed, attempt to request again.
+                            break
+                        case "pending":
+                            # If the state is pending, wait for 0.1 seconds.
+                            await asyncio.sleep(0.1)
+                            pass
             else:
                 # If the key is not in the cache, set the state to pending and cache it.
                 self.cache.set(key, {"state": "pending", "data": None})

@@ -19,10 +19,8 @@ services:
       # FOR ADAPTER
       - ADAPTER_TYPE=${ADAPTER_TYPE:-}
       - ADAPTER_NAME=${ADAPTER_NAME:-}
-      ## standard_crypto_price.coin_market_cap
-      - COIN_MARKET_CAP_API_KEY=${COIN_MARKET_CAP_API_KEY:-}
-      ## standard_crypto_price.crypto_compare
-      - CRYPTO_COMPARE_API_KEY=${CRYPTO_COMPARE_API_KEY:-}
+      # FOR CALLING API
+      - API_KEY=${API_KEY:-}
       # FOR DATABASE
       - MONGO_DB_URL=${MONGO_DB_URL:-}
       - COLLECTION_DB_NAME=${COLLECTION_DB_NAME:-}
