@@ -106,4 +106,4 @@ class RedisCache(Cache):
         Returns:
             Value from the middleware. None if the key is not found.
         """
-        return self.redis.hget(key)
+        return self.redis.hgetall(key)
