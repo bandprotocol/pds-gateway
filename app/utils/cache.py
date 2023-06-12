@@ -83,7 +83,7 @@ class RedisCache(Cache):
             db: Redis database.
             ttl: Time to live in seconds.
         """
-        self.redis = Redis(host=url, port=port, db=db)
+        self.redis = Redis(host=url, port=port, db=db, decode_responses=True)
         self.ttl = ttl
 
     def set(self, key: str, value: dict) -> None:
