@@ -14,7 +14,12 @@ class DB:
     """
 
     def __init__(
-        self, mongo_db_url: str, db_name: str, report_class: Callable[..., Report], *, expiration_time: Optional[int] = None
+        self,
+        mongo_db_url: str,
+        db_name: str,
+        report_class: Callable[..., Report],
+        *,
+        expiration_time: Optional[int] = None,
     ) -> None:
         """Initializes DB with the MongoDB URL and database name.
 

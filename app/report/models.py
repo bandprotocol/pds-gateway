@@ -48,6 +48,7 @@ class RequestReport(Report):
     request_id: Optional[int]
     data_source_id: Optional[int]
     external_id: Optional[int]
+    error_msg: Optional[str]
     created_at: datetime
 
 
