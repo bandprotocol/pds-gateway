@@ -393,7 +393,7 @@ class CoinMarketCap(StandardCryptoPrice):
             "ZEC": "zcash",
             "ZEN": "horizen",
             "ZIL": "zilliqa",
-            "ZRX": "0x"
+            "ZRX": "0x",
         }
 
     async def call(self, input_: Input) -> Output:

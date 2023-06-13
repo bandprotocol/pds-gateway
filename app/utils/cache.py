@@ -1,3 +1,5 @@
+import json
+
 from abc import abstractmethod
 from typing import Optional, Any
 
@@ -93,7 +95,12 @@ class RedisCache(Cache):
             key: Key to set the value to.
             value: Value to set.
         """
-        saved = self.redis.hset(name=key, mapping=value)
+        # Enforce value type to be a dict to prevent error with `json.dump`.
+        if not isinstance(value, dict):
+            raise TypeError(f"Value must be a dict, not {type(value)}")
+
+        # Convert value type from dict to JSON string before setting to Redis.
+        saved = self.redis.set(key, json.dumps(value))
         if saved:
             self.redis.expire(key, self.ttl)
 
@@ -106,4 +113,7 @@ class RedisCache(Cache):
         Returns:
             Value from the middleware. None if the key is not found.
         """
-        return self.redis.hget(key)
+        if value := self.redis.get(key):
+            return json.loads(value)
+        
+        return None

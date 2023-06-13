@@ -45,14 +45,15 @@ class RequestCacheMiddleware:
             if self.cache.get(key):
                 timeout_timestamp = time.time() + self.timeout
 
-                # While the key is in the cache or response timeout has not been exceeded, 
+                # While the key is in the cache or response timeout has not been exceeded,
                 # check the state of the response and return the cached response.
                 while cached := self.cache.get(key) or time.time() < timeout_timestamp:
                     match cached["state"]:
                         case "success":
                             # If the state is success, return the cached response.
-                            data = json.loads(cached["data"])
-                            await JSONResponse(content=data, status_code=200)(scope, receive, send)
+                            await JSONResponse(content=json.loads(cached["data"]), status_code=200)(
+                                scope, receive, send
+                            )
                             return
                         case "failed":
                             # If the state is failed, attempt to request again.
@@ -72,10 +73,9 @@ class RequestCacheMiddleware:
                 # Check if any pending responses has been succesfully cached.
                 cached = self.cache.get(key)
                 if cached and cached["state"] == "success":
-                    data = json.loads(cached["data"])
-                    await JSONResponse(content=data, status_code=200)(scope, receive, send)
+                    await JSONResponse(content=json.loads(cached["data"]), status_code=200)(scope, receive, send)
                     return
-                
+
                 # Otherwise set the state to failed and raise the exception.
                 self.cache.set(key, {"state": "failed", "data": None})
                 raise e

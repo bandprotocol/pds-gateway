@@ -381,7 +381,7 @@ class CoinGecko(StandardCryptoPrice):
             "ZEC": "zcash",
             "ZEN": "zencash",
             "ZIL": "zilliqa",
-            "ZRX": "0x"
+            "ZRX": "0x",
         }
         self.symbols_map_back = {v: k for k, v in self.symbols_map.items()}
 
@@ -391,9 +391,9 @@ class CoinGecko(StandardCryptoPrice):
             "GET",
             self.api_url,
             params={
-                "ids": ",".join([self.symbols_map.get(symbol, symbol) for symbol in input_["symbols"]]), 
+                "ids": ",".join([self.symbols_map.get(symbol, symbol) for symbol in input_["symbols"]]),
                 "vs_currencies": "USD",
-                },
+            },
             headers={
                 "x-cg-pro-api-key": self.api_key,
             },
