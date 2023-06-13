@@ -25,8 +25,7 @@ class RequestCacheMiddleware:
                 message: Message object.
             """
             if message["type"] == "http.response.body":
-                # The value is converted to a string to be compatible with redis cache.
-                self.cache.set(key, json.dumps({"state": "success", "data": message["body"].decode()}))
+                self.cache.set(key, {"state": "success", "data": message["body"].decode()})
             await send(message)
 
         if scope["type"] == "http":
@@ -48,7 +47,7 @@ class RequestCacheMiddleware:
 
                 # While the key is in the cache or response timeout has not been exceeded,
                 # check the state of the response and return the cached response.
-                while cached := json.loads(self.cache.get(key)) or time.time() < timeout_timestamp:
+                while cached := self.cache.get(key) or time.time() < timeout_timestamp:
                     match cached["state"]:
                         case "success":
                             # If the state is success, return the cached response.
@@ -65,21 +64,20 @@ class RequestCacheMiddleware:
                             pass
             else:
                 # If the key is not in the cache, set the state to pending and cache it.
-                self.cache.set(key, json.dumps({"state": "pending", "data": None}))
+                self.cache.set(key, {"state": "pending", "data": None})
 
             try:
                 await self.app(scope, receive, cache_response)
                 return
             except HTTPException as e:
                 # Check if any pending responses has been succesfully cached.
-                if cached_str := self.cache.get(key):
-                    cached = json.loads(cached_str)
-                    if cached["state"] == "success":
-                        await JSONResponse(content=json.loads(cached["data"]), status_code=200)(scope, receive, send)
-                        return
+                cached = self.cache.get(key)
+                if cached and cached["state"] == "success":
+                    await JSONResponse(content=json.loads(cached["data"]), status_code=200)(scope, receive, send)
+                    return
 
                 # Otherwise set the state to failed and raise the exception.
-                self.cache.set(key, json.dumps({"state": "failed", "data": None}))
+                self.cache.set(key, {"state": "failed", "data": None})
                 raise e
 
         # Do nothing if the scope is not http.
