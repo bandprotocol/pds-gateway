@@ -2,10 +2,10 @@ import os
 
 import httpx
 
-from adapter.standard_crypto_price.base import StandardCryptoPrice, Input, Output
+from adapter.internal_service.base import InternalService, Input, Output
 
 
-class InternalService(StandardCryptoPrice):
+class PriceCacher(InternalService):
     # URL that allow traffic from gateway only
     api_url: str = None
 
