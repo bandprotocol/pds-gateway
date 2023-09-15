@@ -86,18 +86,17 @@ async def verify_request_from_bandchain(
         HttpException: When an error occurs
     """
     try:
-        client = AsyncClient()
+        async with AsyncClient() as client:
+            params = add_max_delay_param(get_bandchain_params(headers), max_delay_verification)
+            res = await client.get(url=verify_request_url, params=params)
 
-        params = add_max_delay_param(get_bandchain_params(headers), max_delay_verification)
-        res = await client.get(url=verify_request_url, params=params)
+            # Raises for non-2xx codes
+            res.raise_for_status()
 
-        # Raises for non-2xx codes
-        res.raise_for_status()
+            # Gets body
+            body = res.json()
 
-        # Gets body
-        body = res.json()
-
-        return {"is_delay": body.get("is_delay", False), "data_source_id": body.get("data_source_id", None)}
+            return {"is_delay": body.get("is_delay", False), "data_source_id": body.get("data_source_id", None)}
     except HTTPStatusError as e:
         status_code = e.response.status_code
         verify_error_type = VerifyErrorType.UNKNOWN.value
