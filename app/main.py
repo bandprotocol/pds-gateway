@@ -97,7 +97,7 @@ async def verify_request(req: Request) -> None:
         except Exception as e:
             report.response_code = 500
             report.error_type = VerifyErrorType.UNKNOWN.value
-            report.error_msg = str(e)
+            report.error_msg = f"{e.__class__.__name}: {(str(e))}"
             raise e
         finally:
             # Save report to db if db is enabled
