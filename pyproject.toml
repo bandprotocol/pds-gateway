@@ -4,7 +4,7 @@ description = "Python webserver as a gateway between BandChain validators and pr
 license = "GPL-3.0 license"
 name = "pds-gateway"
 readme = "README.md"
-version = "0.1.0"
+version = "0.1.1"
 
 [tool.poetry.dependencies]
 cachetools = "^5.2.0"

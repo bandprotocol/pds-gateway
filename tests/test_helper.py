@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from httpx import Request, Response
 from pytest_httpx import HTTPXMock
 
+from app.exceptions import VerificationFailedError
 from app.utils.helper import (
     add_max_delay_param,
     get_bandchain_params,
@@ -112,5 +113,5 @@ async def test_verify_request_from_bandchain_failed(httpx_mock: HTTPXMock):
 
     try:
         await verify_request_from_bandchain(mock_headers, "https://www.mock-url.com", 0)
-    except HTTPException as e:
+    except VerificationFailedError as e:
         assert e.status_code == 500
