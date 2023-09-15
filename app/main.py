@@ -93,7 +93,7 @@ async def verify_request(req: Request) -> None:
             report.response_code = e.status_code
             report.error_type = e.error_type
             report.error_msg = str(e)
-            raise e
+            raise HTTPException(401)
         except Exception as e:
             report.response_code = 500
             report.error_type = VerifyErrorType.UNKNOWN.value
