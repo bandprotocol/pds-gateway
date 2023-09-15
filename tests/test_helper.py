@@ -7,8 +7,6 @@ from app.exceptions import VerificationFailedError
 from app.utils.helper import (
     add_max_delay_param,
     get_bandchain_params,
-    is_data_source_id_allowed,
-    verify_request_from_bandchain,
 )
 
 
@@ -68,50 +66,3 @@ def test_add_max_delay_param():
         "signature": "coolsignature",
         "max_delay": "10",
     }
-
-
-def test_is_allow_data_source_id():
-    assert is_data_source_id_allowed(1, [1, 2])
-    assert not is_data_source_id_allowed(3, [1, 2])
-
-
-@pytest.mark.asyncio
-async def test_verify_request_from_bandchain_success(httpx_mock: HTTPXMock):
-    expected = {"is_delay": False, "data_source_id": "226"}
-
-    # mock response
-    def custom_response(_: Request):
-        return Response(
-            status_code=200,
-            json={
-                "chain_id": "band-laozi-testnet6",
-                "validator": "bandvaloper1knxukd35rm4cmthkdgzkfaf8lrhpexv752l7mh",
-                "request_id": "2728447",
-                "external_id": "2",
-                "data_source_id": "226",
-                "is_delay": False,
-            },
-        )
-
-    httpx_mock.add_callback(custom_response)
-
-    verified = await verify_request_from_bandchain(mock_headers, "https://www.mock-url.com", 0)
-
-    assert verified == expected
-
-
-@pytest.mark.asyncio
-async def test_verify_request_from_bandchain_failed(httpx_mock: HTTPXMock):
-    # mock response
-    def custom_response(_: Request):
-        return Response(
-            status_code=500,
-            content=b"server error",
-        )
-
-    httpx_mock.add_callback(custom_response)
-
-    try:
-        await verify_request_from_bandchain(mock_headers, "https://www.mock-url.com", 0)
-    except VerificationFailedError as e:
-        assert e.status_code == 500

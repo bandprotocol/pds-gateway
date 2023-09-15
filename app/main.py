@@ -1,22 +1,20 @@
 import asyncio
-from typing import Any
 from datetime import datetime
+from typing import Any
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 from httpx import HTTPStatusError
 from pytimeparse.timeparse import timeparse
 from starlette.requests import Request
 
 from adapter import init_adapter
-from app.exceptions import VerificationFailedError
 from app.middleware import RequestReportMiddleware, RequestCacheMiddleware, SignatureCacheMiddleware
+from app.middleware.verify_request import VerifyRequestMiddleware
 from app.report import init_db
 from app.report.models import Reports, GatewayInfo, VerifyReport, ProviderResponseReport, RequestReport
 from app.settings import settings
 from app.utils.cache import LocalCache, RedisCache
-from app.utils.helper import is_data_source_id_allowed, verify_request_from_bandchain
 from app.utils.log_config import init_loggers
-from app.utils.types import VerifyErrorType
 
 # Setup apps
 app = FastAPI()
@@ -59,54 +57,41 @@ if db_enabled := bool(settings.MONGO_DB_URL) and settings.MODE == "production":
         VerifyReport,
         expiration_time=settings.MONGO_DB_EXPIRATION_TIME,
     )
-    request_app.add_middleware(RequestReportMiddleware, db=request_db)
+else:
+    request_db = None
+    provider_response_db = None
+    verify_db = None
+
 
 # Setup adapter
 adapter = init_adapter(settings.ADAPTER_TYPE, settings.ADAPTER_NAME)
 
-# Setup caching middleware
-if cache and settings.MODE == "production":
-    request_app.add_middleware(RequestCacheMiddleware, cache=cache, timeout=timeparse(settings.PENDING_TIMEOUT))
-    request_app.add_middleware(SignatureCacheMiddleware, cache=cache)
+# Setup middleware
+if settings.MODE == "production":
+    # Add middleware to store all requests
+    if db_enabled:
+        request_app.add_middleware(RequestReportMiddleware, db=request_db)
 
+    # Add middleware to cache requests by signature
+    if cache:
+        request_app.add_middleware(RequestCacheMiddleware, cache=cache, timeout=timeparse(settings.PENDING_TIMEOUT))
 
-async def verify_request(req: Request) -> None:
-    """Verifies if the request originated from BandChain"""
-    if settings.MODE == "production":
-        report = VerifyReport(
-            response_code=200,
-            created_at=datetime.utcnow(),
-        )
-        try:
-            verify = await verify_request_from_bandchain(
-                req.headers, settings.VERIFY_REQUEST_URL, settings.MAX_DELAY_VERIFICATION
-            )
+    # Add middleware to verify requests
+    request_app.add_middleware(
+        VerifyRequestMiddleware,
+        verify_url=settings.VERIFY_REQUEST_URL,
+        max_verification_delay=settings.MAX_DELAY_VERIFICATION,
+        allowed_data_source_ids=settings.ALLOWED_DATA_SOURCE_IDS,
+        report_db=verify_db,
+    )
 
-            # Checks if the data source requesting is whitelisted
-            if not is_data_source_id_allowed(int(verify["data_source_id"]), settings.ALLOWED_DATA_SOURCE_IDS):
-                raise VerificationFailedError(
-                    status_code=401,
-                    error_type=VerifyErrorType.UNSUPPORTED_DS_ID.value,
-                )
-            report.is_delay = verify.get("is_delay")
-        except VerificationFailedError as e:
-            report.response_code = e.status_code
-            report.error_type = e.error_type
-            report.error_msg = str(e)
-            raise HTTPException(401)
-        except Exception as e:
-            report.response_code = 500
-            report.error_type = VerifyErrorType.UNKNOWN.value
-            report.error_msg = f"{e.__class__.__name__}: {(str(e))}"
-            raise e
-        finally:
-            # Save report to db if db is enabled
-            if db_enabled:
-                verify_db.save(report)
+    # Add middleware to cache responses by signature
+    if cache:
+        request_app.add_middleware(SignatureCacheMiddleware, cache=cache)
 
 
 @request_app.get("/")
-async def request_data(request: Request, _: None = Depends(verify_request)) -> Any:
+async def request_data(request: Request) -> Any:
     """Requests data from the premium data source"""
     report = ProviderResponseReport(
         response_code=200,
