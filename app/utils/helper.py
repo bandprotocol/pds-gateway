@@ -100,7 +100,7 @@ async def verify_request_from_bandchain(
         return {"is_delay": body.get("is_delay", False), "data_source_id": body.get("data_source_id", None)}
     except HTTPStatusError as e:
         status_code = e.response.status_code
-        verify_error_type = VerifyErrorType.FAILED_VERIFICATION.UNKNOWN
+        verify_error_type = VerifyErrorType.FAILED_VERIFICATION.UNKNOWN.value
         if re.match(r"4[\d]{2}", str(status_code)):
             verify_error_type = VerifyErrorType.FAILED_VERIFICATION.value
         raise VerificationFailedError(
