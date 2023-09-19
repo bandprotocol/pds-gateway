@@ -8,8 +8,12 @@ from pytimeparse.timeparse import timeparse
 from starlette.requests import Request
 
 from adapter import init_adapter
-from app.middleware import RequestReportMiddleware, RequestCacheMiddleware, SignatureCacheMiddleware
-from app.middleware.verify_request import VerifyRequestMiddleware
+from app.middleware import (
+    RequestReportMiddleware,
+    RequestCacheMiddleware,
+    SignatureCacheMiddleware,
+    VerifyRequestMiddleware,
+)
 from app.report import init_db
 from app.report.models import Reports, GatewayInfo, VerifyReport, ProviderResponseReport, RequestReport
 from app.settings import settings
