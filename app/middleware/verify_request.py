@@ -30,9 +30,6 @@ class VerifyRequestMiddleware:
         self.client = AsyncClient()
         self.allowed_ds_ids = allowed_data_source_ids
 
-    def __del__(self):
-        self.client.aclose()
-
     def report(self, report: VerifyReport):
         if self.report_db:
             self.report_db.save(report)

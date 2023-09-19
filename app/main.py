@@ -34,7 +34,7 @@ elif settings.CACHE_TYPE == "local":
 else:
     cache = None
 
-# Setup report database and middleware
+# Setup report database
 if db_enabled := bool(settings.MONGO_DB_URL) and settings.MODE == "production":
     request_db = init_db(
         settings.MONGO_DB_URL,
@@ -61,7 +61,6 @@ else:
     request_db = None
     provider_response_db = None
     verify_db = None
-
 
 # Setup adapter
 adapter = init_adapter(settings.ADAPTER_TYPE, settings.ADAPTER_NAME)
