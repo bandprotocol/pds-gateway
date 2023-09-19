@@ -1,9 +1,3 @@
-import pytest
-from fastapi import HTTPException
-from httpx import Request, Response
-from pytest_httpx import HTTPXMock
-
-from app.exceptions import VerificationFailedError
 from app.utils.helper import (
     add_max_delay_param,
     get_bandchain_params,

@@ -1,10 +1,5 @@
 import re
-from typing import List, Mapping, Any, TypedDict, Optional
-
-from httpx import AsyncClient, HTTPStatusError
-
-from app.exceptions import VerificationFailedError
-from app.utils.types import VerifyErrorType
+from typing import Mapping, Any
 
 
 def get_bandchain_params(headers: Mapping[str, Any]) -> dict[str, Any]:
