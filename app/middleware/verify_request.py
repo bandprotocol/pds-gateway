@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import HTTPException
 from httpx import AsyncClient
 from starlette.requests import Request
+from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Scope, Receive, Send
 
 from app.exceptions import VerificationFailedError
@@ -63,17 +64,6 @@ class VerifyRequestMiddleware:
         receive: Receive,
         send: Send,
     ) -> None:
-        async def send_json_response(status_code: int, resp_body: dict[str, str]):
-            headers = [(b"content-type", b"application/json")]
-            response = {
-                "type": "http.response.start",
-                "status": status_code,
-                "headers": headers,
-            }
-            await send(response)
-            resp_body_bytes = json.dumps(resp_body, ensure_ascii=False).encode("utf-8")
-            await send({"type": "http.response.body", "body": resp_body_bytes})
-
         if scope["type"] == "http":
             # Setup report
             report = VerifyReport(
@@ -116,7 +106,9 @@ class VerifyRequestMiddleware:
             finally:
                 # If response code is not 200, return error response
                 if report.response_code != 200:
-                    await send_json_response(report.response_code, {"error": report.error_type})
+                    await JSONResponse(content={"error": report.error_type}, status_code=report.response_code)(
+                        scope, receive, send
+                    )
 
                 # Save the report if report_db is provided
                 if self.report_db:
