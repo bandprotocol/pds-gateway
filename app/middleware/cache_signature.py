@@ -30,7 +30,7 @@ class SignatureCacheMiddleware:
                 message: Message object.
             """
             if message["type"] == "http.response.body":
-                self.cache.set(key, json.loads(message["body"].decode()))
+                self.cache.set(str(key), json.loads(message["body"].decode()))
             await send(message)
 
         if scope["type"] == "http":
@@ -39,17 +39,14 @@ class SignatureCacheMiddleware:
 
             # If the key is not in the cache, get the response from the request and cache it.
             key = get_band_signature_hash(request.headers)
-            if data := self.cache.get(key):
+            if data := self.cache.get(str(key)):
                 # If the key is in the cache, return the cached response.
                 await JSONResponse(content=data, status_code=200)(scope, receive, send)
                 return
 
-            # If the key is not in the cache, get the response from the request and cache it.
-            try:
-                await self.app(scope, receive, cache_response)
-                return
-            except HTTPException as e:
-                raise e
+            # If the key is not in the cache, continue.
+            await self.app(scope, receive, cache_response)
 
         # Do nothing if the scope type is not http.
-        await self.app(scope, receive, send)
+        else:
+            await self.app(scope, receive, send)

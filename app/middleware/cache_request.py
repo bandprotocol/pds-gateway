@@ -41,7 +41,7 @@ class RequestCacheMiddleware:
                 return
 
             # If the key is not in the cache, get the response from the request and cache it.
-            key = hash((rid, eid))
+            key = str(hash((rid, eid)))
             if self.cache.get(key):
                 timeout_timestamp = time.time() + self.timeout
 
@@ -66,19 +66,7 @@ class RequestCacheMiddleware:
                 # If the key is not in the cache, set the state to pending and cache it.
                 self.cache.set(key, {"state": "pending", "data": None})
 
-            try:
-                await self.app(scope, receive, cache_response)
-                return
-            except HTTPException as e:
-                # Check if any pending responses has been succesfully cached.
-                cached = self.cache.get(key)
-                if cached and cached["state"] == "success":
-                    await JSONResponse(content=json.loads(cached["data"]), status_code=200)(scope, receive, send)
-                    return
-
-                # Otherwise set the state to failed and raise the exception.
-                self.cache.set(key, {"state": "failed", "data": None})
-                raise e
-
-        # Do nothing if the scope is not http.
-        await self.app(scope, receive, send)
+            # If the key is not in the cache or the retry has been exceeded, attempt to request directly.
+            await self.app(scope, receive, cache_response)
+        else:
+            await self.app(scope, receive, send)

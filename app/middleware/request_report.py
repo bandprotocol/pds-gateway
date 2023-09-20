@@ -40,14 +40,8 @@ class RequestReportMiddleware:
                 created_at=datetime.utcnow(),
             )
 
-            try:
-                await self.app(scope, receive, send)
-                return
-            except Exception as e:
-                report.error_msg = str(e)
-            finally:
-                # Saves the report to the database.
-                self.db.save(report)
-
-        # Do nothing if the scope type is not http.
-        await self.app(scope, receive, send)
+            await self.app(scope, receive, send)
+            self.db.save(report)
+        else:
+            # Do nothing if the scope type is not http.
+            await self.app(scope, receive, send)

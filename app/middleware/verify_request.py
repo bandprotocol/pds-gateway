@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Any
 
@@ -56,13 +57,30 @@ class VerifyRequestMiddleware:
                 details=f"Data source id {ds_id} is not in allowed set: {self.allowed_ds_ids}",
             )
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(
+        self,
+        scope: Scope,
+        receive: Receive,
+        send: Send,
+    ) -> None:
+        async def send_json_response(status_code: int, resp_body: dict[str, str]):
+            headers = [(b"content-type", b"application/json")]
+            response = {
+                "type": "http.response.start",
+                "status": status_code,
+                "headers": headers,
+            }
+            await send(response)
+            resp_body_bytes = json.dumps(resp_body, ensure_ascii=False).encode("utf-8")
+            await send({"type": "http.response.body", "body": resp_body_bytes})
+
         if scope["type"] == "http":
             # Setup report
             report = VerifyReport(
                 response_code=200,
                 created_at=datetime.utcnow(),
             )
+            current_status = None
             try:
                 # Get the request from scope
                 request = Request(scope)
@@ -76,12 +94,13 @@ class VerifyRequestMiddleware:
 
                 body = res.json()
 
-                # Attempt to parse response from verify endpoint, if not possible, raise error and save report
+                # Attempt to parse response from verify endpoint, if not possible, raise VerificationFailedError
                 is_delay, ds_id = self.parse_verify_response(body)
 
                 # Check if request is in allowed data source ids, if not, raise error and save report
                 self.check_request_validity(ds_id)
 
+                # TODO: handle case for is_delay
                 report.is_delay = is_delay
                 # If request is not delayed, return response from request
                 await self.app(scope, receive, send)
@@ -90,14 +109,18 @@ class VerifyRequestMiddleware:
                 report.response_code = e.status_code
                 report.error_type = e.error
                 report.error_msg = e.details
-                raise HTTPException(status_code=e.status_code, detail=e.error)
             except Exception as e:
                 report.response_code = 500
                 report.error_type = "Internal server error"
                 report.error_msg = f"{e.__class__.__name__}: {(str(e))}"
-                raise HTTPException(status_code=500, detail="Internal server error")
             finally:
-                self.report(report)
+                # If response code is not 200, return error response
+                if report.response_code != 200:
+                    await send_json_response(report.response_code, {"error": report.error_type})
 
-        # Do nothing if the scope is not http.
-        await self.app(scope, receive, send)
+                # Save the report if report_db is provided
+                if self.report_db:
+                    self.report(report)
+        else:
+            # Do nothing if the scope is not http.
+            await self.app(scope, receive, send)
