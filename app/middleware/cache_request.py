@@ -41,7 +41,7 @@ class RequestCacheMiddleware:
                 return
 
             # If the key is not in the cache, get the response from the request and cache it.
-            key = str(hash((rid, eid)))
+            key = hash((rid, eid))
             if self.cache.get(key):
                 timeout_timestamp = time.time() + self.timeout
 

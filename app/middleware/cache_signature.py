@@ -39,7 +39,7 @@ class SignatureCacheMiddleware:
 
             # If the key is not in the cache, get the response from the request and cache it.
             key = get_band_signature_hash(request.headers)
-            if data := self.cache.get(str(key)):
+            if data := self.cache.get(key):
                 # If the key is in the cache, return the cached response.
                 await JSONResponse(content=data, status_code=200)(scope, receive, send)
                 return
