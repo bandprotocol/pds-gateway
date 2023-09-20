@@ -76,7 +76,7 @@ class VerifyRequestMiddleware:
                 # Check if request is valid from verify endpoint
                 res = await self.client.get(
                     self.verify_url,
-                    headers=add_max_delay_param(get_bandchain_params(request.headers), self.max_verification_delay),
+                    params=add_max_delay_param(get_bandchain_params(request.headers), self.max_verification_delay),
                 )
                 res.raise_for_status()
 
