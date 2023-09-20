@@ -1,10 +1,10 @@
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from httpx import Request, Response
 from pytest_httpx import HTTPXMock
 
 from app.middleware import VerifyRequestMiddleware
+from app.utils.helper import add_max_delay_param, get_bandchain_params
 
 
 @pytest.fixture
@@ -44,13 +44,18 @@ def non_mocked_hosts() -> list[str]:
     return ["test_pds"]
 
 
+def build_full_url_with_delay(url: str, params: dict[str, str]) -> str:
+    params_with_delay = add_max_delay_param(get_bandchain_params(params), 0)
+    return f"{url}?{'&'.join([f'{k}={v}' for k, v in params_with_delay.items()])}"
+
+
 @pytest.mark.asyncio
 async def test_verify_request_from_bandchain_success(
     mock_client: TestClient, mock_headers: dict[str, str], httpx_mock: HTTPXMock
 ):
     httpx_mock.add_response(
         method="GET",
-        url="https://www.mock-verify.com",
+        url=build_full_url_with_delay("https://www.mock-verify.com", mock_headers),
         status_code=200,
         json={
             "chain_id": "band-laozi-testnet6",
@@ -73,7 +78,7 @@ async def test_verify_request_from_bandchain_with_prohibited_ds_id(
 ):
     httpx_mock.add_response(
         method="GET",
-        url="https://www.mock-verify.com",
+        url=build_full_url_with_delay("https://www.mock-verify.com", mock_headers),
         status_code=200,
         json={
             "chain_id": "band-laozi-testnet6",
@@ -96,7 +101,7 @@ async def test_verify_request_from_bandchain_with_verify_fail(
 ):
     httpx_mock.add_response(
         method="GET",
-        url="https://www.mock-verify.com",
+        url=build_full_url_with_delay("https://www.mock-verify.com", mock_headers),
         status_code=500,
         content=b"server error",
     )
@@ -110,7 +115,12 @@ async def test_verify_request_from_bandchain_with_verify_fail(
 async def test_verify_request_from_bandchain_with_invalid_verify_response(
     mock_client: TestClient, mock_headers: dict[str, str], httpx_mock: HTTPXMock
 ):
-    httpx_mock.add_response(method="GET", url="https://www.mock-verify.com", status_code=200, json={"not": "valid"})
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify.com", mock_headers),
+        status_code=200,
+        json={"not": "valid"},
+    )
 
     res = mock_client.get("/request", headers=mock_headers)
     assert res.json() == {"error": "Failed to parse successful response from verify endpoint"}
