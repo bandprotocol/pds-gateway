@@ -1,3 +1,4 @@
 from .cache_request import RequestCacheMiddleware
 from .cache_signature import SignatureCacheMiddleware
 from .request_report import RequestReportMiddleware
+from .verify_request import VerifyRequestMiddleware

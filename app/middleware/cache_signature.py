@@ -44,12 +44,9 @@ class SignatureCacheMiddleware:
                 await JSONResponse(content=data, status_code=200)(scope, receive, send)
                 return
 
-            # If the key is not in the cache, get the response from the request and cache it.
-            try:
-                await self.app(scope, receive, cache_response)
-                return
-            except HTTPException as e:
-                raise e
+            # If the key is not in the cache, continue.
+            await self.app(scope, receive, cache_response)
 
         # Do nothing if the scope type is not http.
-        await self.app(scope, receive, send)
+        else:
+            await self.app(scope, receive, send)
