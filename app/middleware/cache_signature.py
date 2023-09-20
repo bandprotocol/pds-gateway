@@ -30,7 +30,7 @@ class SignatureCacheMiddleware:
                 message: Message object.
             """
             if message["type"] == "http.response.body":
-                self.cache.set(str(key), json.loads(message["body"].decode()))
+                self.cache.set(key, json.loads(message["body"].decode()))
             await send(message)
 
         if scope["type"] == "http":
