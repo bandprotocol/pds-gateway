@@ -1,9 +1,7 @@
-import json
 from datetime import datetime
 from typing import Any
 
-from fastapi import HTTPException
-from httpx import AsyncClient
+from httpx import AsyncClient, HTTPStatusError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Scope, Receive, Send
@@ -99,6 +97,10 @@ class VerifyRequestMiddleware:
                 report.response_code = e.status_code
                 report.error_type = e.error
                 report.error_msg = e.details
+            except HTTPStatusError as e:
+                report.response_code = e.response.status_code
+                report.error_type = e.response.reason_phrase
+                report.error_msg = e.response.text
             except Exception as e:
                 report.response_code = 500
                 report.error_type = "Internal server error"
