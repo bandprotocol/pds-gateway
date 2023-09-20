@@ -102,7 +102,7 @@ async def test_verify_request_from_bandchain_with_verify_fail(
     )
 
     res = mock_client.get("/request", headers=mock_headers)
-    assert res.json() == {"error": "Internal server error"}
+    assert res.json() == {"error": "Internal Server Error"}
     assert res.status_code == 500
 
 

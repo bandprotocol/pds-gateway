@@ -103,7 +103,7 @@ class VerifyRequestMiddleware:
                 report.error_msg = e.response.text
             except Exception as e:
                 report.response_code = 500
-                report.error_type = "Internal server error"
+                report.error_type = "Internal Server Error"
                 report.error_msg = f"{e.__class__.__name__}: {(str(e))}"
             finally:
                 # If response code is not 200, return error response
