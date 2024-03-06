@@ -17,7 +17,6 @@ jobs:
       - name: Test PDS Gateway
         run: |-
           pip3 install poetry
-          pip3 install packaging
           poetry config virtualenvs.create false
           poetry install --no-root
           poetry run pytest
