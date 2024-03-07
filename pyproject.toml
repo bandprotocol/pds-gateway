@@ -16,13 +16,8 @@ python = "^3.11"
 python-dotenv = "^1.0.0"
 pytimeparse = "^1.1.8"
 uvicorn = "^0.21.1"
-redis = {extras = ["hiredis"], version = "^4.5.4"}
-
-# only used in github actions
-[tool.poetry.group.github-actions]
-optional = true
-[tool.poetry.group.github-actions.dependencies]
 packaging = "^23.2"
+redis = {extras = ["hiredis"], version = "^4.5.4"}
 
 [tool.poetry.group.dev.dependencies]
 black = {extras = ["d"], version = "^23.3.0"}
