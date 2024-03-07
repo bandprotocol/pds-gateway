@@ -68,8 +68,8 @@ class Mistral(Adapter):
                 "temperature": float(input_["temperature"]),
                 "top_p": float(input_["top_p"]),
                 "max_tokens": int(input_["max_tokens"]),
-                "stream": True if input_["stream"] == "true" else False,
-                "safe_prompt": True if input_["stream"] == "true" else False,
+                "stream": True if input_["stream"].lower() == "true" else False,
+                "safe_prompt": True if input_["safe_prompt"].lower() == "true" else False,
                 "random_seed": int(input_["random_seed"]),
             }
         )

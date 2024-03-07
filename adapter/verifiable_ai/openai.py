@@ -66,7 +66,7 @@ class OpenAI(Adapter):
                 "temperature": float(input_["temperature"]),
                 "top_p": float(input_["top_p"]),
                 "max_tokens": int(input_["max_tokens"]),
-                "stream": True if input_["stream"] == "true" else False,
+                "stream": True if input_["stream"].lower() == "true" else False,
                 "seed": int(input_["seed"]),
             }
         )
