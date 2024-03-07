@@ -43,7 +43,6 @@ class Mistral(Adapter):
         self.api_key = os.getenv("API_KEY", None)
 
     def parse_input(self, request: Request) -> Input:
-        print(request)
         return Input(**request)
 
     def verify_output(self, input_: Input, output: Output):
