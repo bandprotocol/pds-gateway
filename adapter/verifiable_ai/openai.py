@@ -33,7 +33,7 @@ class Response(TypedDict):
     answer: str
 
 
-class OpenAI(Adapter):
+class Openai(Adapter):
     api_url: str = "https://api.openai.com/v1/chat/completions"
     api_key: str
     
