@@ -43,6 +43,7 @@ class Mistral(Adapter):
         self.api_key = os.getenv("API_KEY", None)
 
     def parse_input(self, request: Request) -> Input:
+        print(request)
         return Input(**request)
 
     def verify_output(self, input_: Input, output: Output):
@@ -51,7 +52,7 @@ class Mistral(Adapter):
     def parse_output(self, output: Output) -> Response:
         return Response(**output)
     
-    async def call(self, input_: Input) -> Output:
+    async def call(self, input_: Input) -> Output:        
         client = httpx.AsyncClient()
         response = await client.request(
             "POST",
@@ -59,19 +60,7 @@ class Mistral(Adapter):
             headers={
                 "Authorization": "Bearer {}".format(self.api_key),
             },
-            json={
-                "model": input_["model"],
-                "messages": [{
-                    "role": "user",
-                    "content": input_["messages"],
-                }],
-                "temperature": float(input_["temperature"]),
-                "top_p": float(input_["top_p"]),
-                "max_tokens": int(input_["max_tokens"]),
-                "stream": True if input_["stream"].lower() == "true" else False,
-                "safe_prompt": True if input_["safe_prompt"].lower() == "true" else False,
-                "random_seed": int(input_["random_seed"]),
-            }
+            json=input_
         )
 
         response.raise_for_status()

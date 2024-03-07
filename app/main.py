@@ -94,6 +94,7 @@ if settings.MODE == "production":
 
 
 @request_app.get("/")
+@request_app.post("/")
 async def request_data(request: Request) -> Any:
     """Requests data from the premium data source"""
     report = ProviderResponseReport(
@@ -101,7 +102,10 @@ async def request_data(request: Request) -> Any:
         created_at=datetime.utcnow(),
     )
     try:
-        return await adapter.unified_call(dict(request.query_params))
+        if request.method == "POST":
+            return await adapter.unified_call(await request.json())
+        else:
+            return await adapter.unified_call(dict(request.query_params))
     except HTTPStatusError as e:
         report.response_code = e.response.status_code
         report.error_msg = str(e)
