@@ -8,20 +8,20 @@ from adapter import Adapter
 class Request(TypedDict):
     model: str
     messages: str
-    max_tokens: int
-    stream: bool
     temperature: float
     top_p: float
+    max_tokens: int
+    stream: bool
     seed: int
 
 
 class Input(TypedDict):
     model: str
     messages: str
-    max_tokens: int
-    stream: bool
     temperature: float
     top_p: float
+    max_tokens: int
+    stream: bool
     seed: int
 
 
