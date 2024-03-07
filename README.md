@@ -1,50 +1,153 @@
-# Requirement
+# Premium Data Sources Gateway
 
-## Environment variables
+## Requirements
 
-- You can use .env file by running "cp .env.example .env" and update the environment variables of Gateway and your adapter.
+### Environment Variables
 
-# Run application
+Utilize the `.env` file by running:
 
-## Run by Docker Compose
+```bash
+cp .env.example .env
+```
 
-- run "docker-compose up"
+Ensure to update the environment variables for the Gateway and your chosen adapter.
 
-# Testing
+## Running the Application
 
-- run "pytest"
+### Docker Compose
 
-# Supported adapters
+To run the application using Docker Compose:
 
-## StandardCryptoPrice
+```bash
+docker-compose up
+```
 
-- This standard of adapter type is used for getting current price of each crypto symbols. Here are the spec of request, response, adapter input and adapter output.
-  - Request:
-    - symbols: str (e.g. "BAND,ALPHA")
-  - Response:
-    - prices: []{symbol: str, price: float, timestamp: integer} (e.g. [{symbol: “BAND”, price: 99999, timestamp: 161111111111}, {symbol: “ALPHA”, price: 99999, timestamp: 161111111111}])
-  - Adapter input:
-    - symbols: List[str] (e.g. ["BAND", "ALPHA"])
-  - Adapter output:
-    - prices: []{symbol: str, price: float, timestamp: integer} (e.g. [{symbol: “BAND”, price: 99999, timestamp: 161111111111}, {symbol: “ALPHA”, price: 99999, timestamp: 161111111111}]
+## Testing
 
-### CoinMarketCap
+Execute tests with:
 
-- To setup gateway for CoinmarketCap price API, you have to setup these environments:
-  - ADAPTER_TYPE = "standard_crypto_price"
-  - ADAPTER_NAME = "coin_market_cap"
-  - API_KEY = <YOUR_COIN_MARKET_CAP_API_KEY>
+```bash
+pytest
+```
 
-### CryptoCompare
+## Supported Adapters
 
-- To setup gateway for CryptoCompare price API, you have to setup these environments:
-  - ADAPTER_TYPE = "standard_crypto_price"
-  - ADAPTER_NAME = "crypto_compare"
-  - API_KEY = <YOUR_CRYPTO_COMPARE_API_KEY>
-  - 
-### CoinGecko
+### StandardCryptoPrice
 
-- To setup gateway for CoinGecko price API, you have to setup these environments:
-  - ADAPTER_TYPE = "standard_crypto_price"
-  - ADAPTER_NAME = "coin_gecko"
-  - API_KEY = <YOUR_COIN_GECKO_API_KEY>
+This adapter type retrieves the current price of each cryptocurrency symbol. Below are the specifications for the request, response, adapter input, and adapter output.
+
+#### GET Request
+
+Parameters:
+
+- `symbols`: str (e.g., "BAND,ALPHA")
+
+#### Response
+
+```python
+prices: []{symbol: str, price: float, timestamp: integer}
+```
+
+Example:
+
+```python
+[{symbol: "BAND", price: 99999, timestamp: 161111111111}, {symbol: "ALPHA", price: 99999, timestamp: 161111111111}]
+```
+
+#### Set Environment Valuables
+
+- CoinMarketCap:
+
+  - `ADAPTER_TYPE = "standard_crypto_price"`
+  - `ADAPTER_NAME = "coin_market_cap"`
+  - `API_KEY = <YOUR_COIN_MARKET_CAP_API_KEY>`
+
+- CryptoCompare:
+
+  - `ADAPTER_TYPE = "standard_crypto_price"`
+  - `ADAPTER_NAME = "crypto_compare"`
+  - `API_KEY = <YOUR_CRYPTO_COMPARE_API_KEY>`
+
+- CoinGecko:
+  - `ADAPTER_TYPE = "standard_crypto_price"`
+  - `ADAPTER_NAME = "coin_gecko"`
+  - `API_KEY = <YOUR_COIN_GECKO_API_KEY>`
+
+## VerifiableAi
+
+This VerifiableAi adapter type is used to request the Ai API.
+
+### OpenAI
+
+#### Request
+
+Body:
+
+```json
+{
+  "model": "gpt-3.5-turbo",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is the best French cheese?"
+    }
+  ],
+  "max_tokens": 25,
+  "seed": 1,
+  "stream": false,
+  "temperature": 0.7,
+  "top_p": 1
+}
+```
+
+#### Response
+
+```json
+{
+  "answer": "It is subjective and depends on personal preference, but some popular French cheeses include Brie, Camembert, Roquefort"
+}
+```
+
+#### Set Environment Valuables
+
+- `ADAPTER_TYPE = "verifiable_ai"`
+- `ADAPTER_NAME = "openai"`
+- `API_KEY = <YOUR_OPEN_AI_API_KEY>`
+
+### Mistral
+
+#### Request
+
+Body:
+
+```json
+{
+  "model": "mistral-tiny",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is the best French cheese?"
+    }
+  ],
+  "temperature": 0.7,
+  "top_p": 1,
+  "max_tokens": 16,
+  "stream": false,
+  "safe_prompt": false,
+  "random_seed": 1
+}
+```
+
+#### Response
+
+```json
+{
+  "answer": "It is subjective and depends on personal preference, but some popular French cheeses include B"
+}
+```
+
+#### Set Environment Valuables
+
+- `ADAPTER_TYPE = "verifiable_ai"`
+- `ADAPTER_NAME = "mistral"`
+- `API_KEY = <YOUR_MISTRAL_API_KEY>`
