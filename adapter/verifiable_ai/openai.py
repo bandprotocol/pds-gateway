@@ -33,7 +33,7 @@ class Response(TypedDict):
     answer: str
 
 
-class OpenAI(Adapter):
+class Openai(Adapter):
     api_url: str = "https://api.openai.com/v1/chat/completions"
     api_key: str
     
@@ -57,18 +57,7 @@ class OpenAI(Adapter):
             headers={
                 "Authorization": "Bearer {}".format(self.api_key),
             },
-            json={
-                "model": input_["model"],
-                "messages": [{
-                    "role": "user",
-                    "content": input_["messages"],
-                }],
-                "temperature": float(input_["temperature"]),
-                "top_p": float(input_["top_p"]),
-                "max_tokens": int(input_["max_tokens"]),
-                "stream": True if input_["stream"] == "true" else False,
-                "seed": int(input_["seed"]),
-            }
+            json=input_
         )
 
         response.raise_for_status()
