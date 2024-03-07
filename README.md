@@ -40,7 +40,7 @@ pytest
 
 This adapter type retrieves the current price of each cryptocurrency symbol. Below are the specifications for the request, response, adapter input, and adapter output.
 
-#### GET Request
+#### [GET] Request
 
 Parameters:
 
@@ -83,7 +83,7 @@ This VerifiableAI adapter type is used to request the AI API.
 
 ### OpenAI
 
-#### Request
+#### [POST] Request
 
 Body:
 
@@ -91,16 +91,13 @@ Body:
 {
   "model": "gpt-3.5-turbo",
   "messages": [
-    {
-      "role": "user",
-      "content": "What is the best French cheese?"
-    }
+    { "role": "user", "content": "What is the best French cheese?" }
   ],
-  "max_tokens": 25,
-  "seed": 1,
-  "stream": false,
   "temperature": 0.7,
-  "top_p": 1
+  "top_p": 1,
+  "max_tokens": 25,
+  "stream": false,
+  "seed": 1
 }
 ```
 
@@ -120,7 +117,7 @@ Body:
 
 ### Mistral
 
-#### Request
+#### [POST] Request
 
 Body:
 
@@ -128,10 +125,7 @@ Body:
 {
   "model": "mistral-tiny",
   "messages": [
-    {
-      "role": "user",
-      "content": "What is the best French cheese?"
-    }
+    { "role": "user", "content": "What is the best French cheese?" }
   ],
   "temperature": 0.7,
   "top_p": 1,
