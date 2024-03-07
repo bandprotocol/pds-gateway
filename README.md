@@ -1,5 +1,7 @@
 # Premium Data Sources Gateway
 
+The gateway for data sources on BandChain that require an API key for access. However, to prevent exposing the key on the chain, our solution allows secure access to the API without revealing the key. Only validators assigned to retrieve data for BandChain requests have the capability to obtain price data from these data sources.
+
 ## Requirements
 
 ### Environment Variables
@@ -13,6 +15,8 @@ cp .env.example .env
 Ensure to update the environment variables for the Gateway and your chosen adapter.
 
 ## Running the Application
+
+> Note: You have the option to set the environment variable `MODE=development` to facilitate testing your API locally. This allows you to make requests without the necessity of verifying that the requests originate from validators assigned to retrieve data for BandChain.
 
 ### Docker Compose
 
@@ -73,9 +77,9 @@ Example:
   - `ADAPTER_NAME = "coin_gecko"`
   - `API_KEY = <YOUR_COIN_GECKO_API_KEY>`
 
-## VerifiableAi
+## VerifiableAI
 
-This VerifiableAi adapter type is used to request the Ai API.
+This VerifiableAI adapter type is used to request the AI API.
 
 ### OpenAI
 
