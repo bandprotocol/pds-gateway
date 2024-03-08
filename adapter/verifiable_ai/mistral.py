@@ -7,7 +7,7 @@ from adapter import Adapter
 
 class Request(TypedDict):
     model: str
-    messages: str
+    messages: list[dict[str, str]]
     temperature: float
     top_p: float
     max_tokens: int
@@ -18,7 +18,7 @@ class Request(TypedDict):
 
 class Input(TypedDict):
     model: str
-    messages: str
+    messages: list[dict[str, str]]
     temperature: float
     top_p: float
     max_tokens: int
