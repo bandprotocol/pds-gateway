@@ -13,7 +13,7 @@ jobs:
 
       - name: Test PDS Gateway
         run: |-
-          pip3 install --upgrade pip
+          pip3 install --upgrade pip3 setuptools packaging wheel
           pip3 install --upgrade poetry  # Get latest Poetry
           poetry config virtualenvs.create false
           poetry install --no-root
