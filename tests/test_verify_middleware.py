@@ -40,6 +40,27 @@ def mock_client() -> TestClient:
 
 
 @pytest.fixture
+def mock_client_with_multiple_urls() -> TestClient:
+    app = FastAPI()
+    app.add_middleware(
+        VerifyRequestMiddleware,
+        verify_urls=[
+            "https://www.mock-verify-1.com",
+            "https://www.mock-verify-2.com",
+        ],
+        max_verification_delay=0,
+        allowed_data_source_ids=[1, 2],
+        report_db=None,
+    )
+
+    @app.get("/request")
+    def test_request():
+        return {"Hello": "World"}
+
+    return TestClient(app, "http://test_pds")
+
+
+@pytest.fixture
 def non_mocked_hosts() -> list[str]:
     return ["test_pds"]
 
@@ -127,3 +148,172 @@ async def test_verify_request_from_bandchain_with_invalid_verify_response(
         "error": "Failed to parse successful response from verify endpoint"
     }
     assert res.status_code == 500
+
+
+@pytest.mark.asyncio
+async def test_verify_request_with_multiple_urls_all_success(
+    mock_client_with_multiple_urls: TestClient,
+    mock_headers: dict[str, str],
+    httpx_mock: HTTPXMock,
+):
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify-1.com", mock_headers),
+        status_code=200,
+        json={
+            "chain_id": "band-laozi-testnet6",
+            "validator": "bandvaloper1knxukd35rm4cmthkdgzkfaf8lrhpexv752l7mh",
+            "request_id": "2728447",
+            "external_id": "2",
+            "data_source_id": "1",
+            "is_delay": True,
+        },
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify-2.com", mock_headers),
+        status_code=200,
+        json={
+            "chain_id": "band-laozi-testnet6",
+            "validator": "bandvaloper1knxukd35rm4cmthkdgzkfaf8lrhpexv752l7mh",
+            "request_id": "2728447",
+            "external_id": "2",
+            "data_source_id": "1",
+            "is_delay": False,
+        },
+    )
+
+    res = mock_client_with_multiple_urls.get("/request", headers=mock_headers)
+    assert res.json() == {"Hello": "World"}
+    assert res.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_verify_request_with_multiple_urls_first_fails_second_succeeds(
+    mock_client_with_multiple_urls: TestClient,
+    mock_headers: dict[str, str],
+    httpx_mock: HTTPXMock,
+):
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify-1.com", mock_headers),
+        status_code=500,
+        content=b"server error",
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify-2.com", mock_headers),
+        status_code=200,
+        json={
+            "chain_id": "band-laozi-testnet6",
+            "validator": "bandvaloper1knxukd35rm4cmthkdgzkfaf8lrhpexv752l7mh",
+            "request_id": "2728447",
+            "external_id": "2",
+            "data_source_id": "1",
+            "is_delay": False,
+        },
+    )
+
+    res = mock_client_with_multiple_urls.get("/request", headers=mock_headers)
+    assert res.json() == {"Hello": "World"}
+    assert res.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_verify_request_with_multiple_urls_all_fail(
+    mock_client_with_multiple_urls: TestClient,
+    mock_headers: dict[str, str],
+    httpx_mock: HTTPXMock,
+):
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify-1.com", mock_headers),
+        status_code=500,
+        content=b"server error",
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify-2.com", mock_headers),
+        status_code=500,
+        content=b"server error",
+    )
+
+    res = mock_client_with_multiple_urls.get("/request", headers=mock_headers)
+    assert res.json() == {"error": "All verification requests failed"}
+    assert res.status_code == 500
+
+
+@pytest.mark.asyncio
+async def test_verify_request_with_multiple_urls_all_delay(
+    mock_client_with_multiple_urls: TestClient,
+    mock_headers: dict[str, str],
+    httpx_mock: HTTPXMock,
+):
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify-1.com", mock_headers),
+        status_code=200,
+        json={
+            "chain_id": "band-laozi-testnet6",
+            "validator": "bandvaloper1knxukd35rm4cmthkdgzkfaf8lrhpexv752l7mh",
+            "request_id": "2728447",
+            "external_id": "2",
+            "data_source_id": "1",
+            "is_delay": True,
+        },
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify-2.com", mock_headers),
+        status_code=200,
+        json={
+            "chain_id": "band-laozi-testnet6",
+            "validator": "bandvaloper1knxukd35rm4cmthkdgzkfaf8lrhpexv752l7mh",
+            "request_id": "2728447",
+            "external_id": "2",
+            "data_source_id": "1",
+            "is_delay": True,
+        },
+    )
+
+    res = mock_client_with_multiple_urls.get("/request", headers=mock_headers)
+    assert res.json() == {"Hello": "World"}
+    assert res.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_verify_request_with_multiple_urls_first_not_delay_second_delay(
+    mock_client_with_multiple_urls: TestClient,
+    mock_headers: dict[str, str],
+    httpx_mock: HTTPXMock,
+):
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify-1.com", mock_headers),
+        status_code=200,
+        json={
+            "chain_id": "band-laozi-testnet6",
+            "validator": "bandvaloper1knxukd35rm4cmthkdgzkfaf8lrhpexv752l7mh",
+            "request_id": "2728447",
+            "external_id": "2",
+            "data_source_id": "1",
+            "is_delay": False,
+        },
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url=build_full_url_with_delay("https://www.mock-verify-2.com", mock_headers),
+        status_code=200,
+        json={
+            "chain_id": "band-laozi-testnet6",
+            "validator": "bandvaloper1knxukd35rm4cmthkdgzkfaf8lrhpexv752l7mh",
+            "request_id": "2728447",
+            "external_id": "2",
+            "data_source_id": "1",
+            "is_delay": True,
+        },
+    )
+
+    res = mock_client_with_multiple_urls.get("/request", headers=mock_headers)
+    assert res.json() == {"Hello": "World"}
+    assert res.status_code == 200
