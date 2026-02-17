@@ -15,7 +15,13 @@ from app.middleware import (
     VerifyRequestMiddleware,
 )
 from app.report import init_db
-from app.report.models import Reports, GatewayInfo, VerifyReport, ProviderResponseReport, RequestReport
+from app.report.models import (
+    Reports,
+    GatewayInfo,
+    VerifyReport,
+    ProviderResponseReport,
+    RequestReport,
+)
 from app.settings import settings
 from app.utils.cache import LocalCache, RedisCache
 from app.utils.log_config import init_loggers
@@ -32,7 +38,12 @@ log.info(f"GATEWAY_MODE: {settings.MODE}")
 
 # Setup cache
 if settings.CACHE_TYPE == "redis":
-    cache = RedisCache(settings.REDIS_URL, settings.REDIS_PORT, settings.REDIS_DB, timeparse(settings.TTL))
+    cache = RedisCache(
+        settings.REDIS_URL,
+        settings.REDIS_PORT,
+        settings.REDIS_DB,
+        timeparse(settings.TTL),
+    )
 elif settings.CACHE_TYPE == "local":
     cache = LocalCache(settings.CACHE_SIZE, timeparse(settings.TTL))
 else:
@@ -77,12 +88,16 @@ if settings.MODE == "production":
 
     # Add middleware to cache requests by signature
     if cache:
-        request_app.add_middleware(RequestCacheMiddleware, cache=cache, timeout=timeparse(settings.PENDING_TIMEOUT))
+        request_app.add_middleware(
+            RequestCacheMiddleware,
+            cache=cache,
+            timeout=timeparse(settings.PENDING_TIMEOUT),
+        )
 
     # Add middleware to verify requests
     request_app.add_middleware(
         VerifyRequestMiddleware,
-        verify_url=settings.VERIFY_REQUEST_URL,
+        verify_urls=settings.VERIFY_REQUEST_URLS,
         max_verification_delay=settings.MAX_DELAY_VERIFICATION,
         allowed_data_source_ids=settings.ALLOWED_DATA_SOURCE_IDS,
         report_db=verify_db,
