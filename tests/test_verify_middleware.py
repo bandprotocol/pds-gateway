@@ -26,7 +26,7 @@ def mock_client() -> TestClient:
     app = FastAPI()
     app.add_middleware(
         VerifyRequestMiddleware,
-        verify_url="https://www.mock-verify.com",
+        verify_urls=["https://www.mock-verify.com"],
         max_verification_delay=0,
         allowed_data_source_ids=[1, 2],
         report_db=None,
@@ -107,7 +107,7 @@ async def test_verify_request_from_bandchain_with_verify_fail(
     )
 
     res = mock_client.get("/request", headers=mock_headers)
-    assert res.json() == {"error": "Internal Server Error"}
+    assert res.json() == {"error": "All verification requests failed"}
     assert res.status_code == 500
 
 
@@ -123,5 +123,7 @@ async def test_verify_request_from_bandchain_with_invalid_verify_response(
     )
 
     res = mock_client.get("/request", headers=mock_headers)
-    assert res.json() == {"error": "Failed to parse successful response from verify endpoint"}
+    assert res.json() == {
+        "error": "Failed to parse successful response from verify endpoint"
+    }
     assert res.status_code == 500
