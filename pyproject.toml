@@ -16,7 +16,7 @@ python = "^3.11"
 python-dotenv = "^1.0.0"
 pytimeparse = "^1.1.8"
 uvicorn = "^0.21.1"
-packaging = "^23.2"
+packaging = "^24.2"
 redis = {extras = ["hiredis"], version = "^4.5.4"}
 
 [tool.poetry.group.dev.dependencies]
@@ -27,7 +27,7 @@ pytest-httpx = "^0.21.2"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core", "packaging>=24.0"]
+requires = ["poetry-core", "packaging>=24.2"]
 
 [tool.black]
 line-length = 119
