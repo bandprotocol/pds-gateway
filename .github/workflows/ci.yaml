@@ -11,13 +11,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Upgrade build tools 
-        run: |
-          pip install --upgrade pip setuptools packaging wheel
-
       - name: Test PDS Gateway
         run: |-
-          pip3 install poetry
+          pip3 install --upgrade pip
+          pip3 install --upgrade poetry  # Get latest Poetry
           poetry config virtualenvs.create false
           poetry install --no-root
           poetry run pytest
