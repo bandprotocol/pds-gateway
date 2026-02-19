@@ -178,6 +178,6 @@ class VerifyRequestMiddleware:
 
     async def _verify_url(self, url: str, params: dict[str, Any]) -> dict[str, Any]:
         """Verify against a single URL and return the response body."""
-        res = await self.client.get(url, params=params)
+        res = await self.client.get(url, params=params, timeout=10)
         res.raise_for_status()
         return res.json()

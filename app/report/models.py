@@ -29,9 +29,9 @@ class Report(BaseModel):
 
 class VerifyReport(Report):
     response_code: int
-    is_delay: Optional[bool]
-    error_type: Optional[str]
-    error_msg: Optional[str]
+    is_delay: Optional[bool] = None
+    error_type: Optional[str] = None
+    error_msg: Optional[str] = None
     created_at: datetime
 
 
