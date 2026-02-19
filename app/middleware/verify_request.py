@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 from typing import Any
 
-from httpx import AsyncClient, HTTPStatusError
+from httpx import AsyncClient
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Scope, Receive, Send
