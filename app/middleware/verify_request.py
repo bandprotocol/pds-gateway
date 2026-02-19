@@ -88,8 +88,18 @@ class VerifyRequestMiddleware:
 
                 for i, result in enumerate(results):
                     if isinstance(result, Exception):
+                        url = result.request.url
+                        # Reconstruct URL without query parameters to avoid leaking signatures
+                        port = f":{url.port}" if url.port is not None else ""
+                        sanitized_url = f"{url.scheme}://{url.host}{port}{url.path}"
+                        status_code = (
+                            result.response.status_code
+                            if result.response is not None
+                            else "unknown"
+                        )
                         errors.append(
-                            f"{self.verify_urls[i]}: {type(result).__name__}: {str(result)}"
+                            f"{self.verify_urls[i]}: HTTPStatusError: "
+                            f"status_code={status_code}, url={sanitized_url}"
                         )
                     else:
                         valid_results.append((result, i))
@@ -105,12 +115,35 @@ class VerifyRequestMiddleware:
                         ),
                     )
 
+                is_delay: bool | None = None
+                ds_id: int | None = None
+                errors = []
+
                 # Find result: prefer any with is_delay=false, otherwise use first one
                 for result, _ in valid_results:
-                    is_delay, ds_id = self.parse_verify_response(result)
+                    try:
+                        is_delay, ds_id = self.parse_verify_response(result)
+                    except VerificationFailedError as e:
+                        # If parsing fails, log the error but continue processing other results
+                        errors.append(
+                            f"Failed to parse response from verify endpoint: {result}, error: {e.details}"
+                        )
+                        continue
                     # If any response indicates no delay, we can break early and use that result
                     if not is_delay:
                         break
+
+                # If we couldn't parse any successful response, treat it as a failure
+                if is_delay is None or ds_id is None:
+                    raise VerificationFailedError(
+                        status_code=500,
+                        error="Failed to parse any successful response from verify endpoints",
+                        details=(
+                            "; ".join(errors)
+                            if errors
+                            else "All verification responses were malformed or invalid"
+                        ),
+                    )
 
                 # Check if request is in allowed data source ids, if not, raise error and save report
                 self.check_request_validity(ds_id)
