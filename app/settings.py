@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: LOG_LEVELS = "INFO"
 
     # Verification
-    VERIFY_REQUEST_URL: HttpUrl
+    VERIFY_REQUEST_URLS: list[HttpUrl]
     ALLOWED_DATA_SOURCE_IDS: list[int]
     MAX_DELAY_VERIFICATION: int = 0
 

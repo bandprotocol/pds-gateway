@@ -1,7 +1,8 @@
+import asyncio
 from datetime import datetime
 from typing import Any
 
-from httpx import AsyncClient, HTTPStatusError
+from httpx import AsyncClient
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Scope, Receive, Send
@@ -19,13 +20,13 @@ class VerifyRequestMiddleware:
     def __init__(
         self,
         app: ASGIApp,
-        verify_url: str,
+        verify_urls: list[str],
         max_verification_delay: int,
         allowed_data_source_ids: list[int],
         report_db: DB = None,
     ) -> None:
         self.app = app
-        self.verify_url = verify_url
+        self.verify_urls = verify_urls
         self.max_verification_delay = max_verification_delay
         self.report_db = report_db
         self.client = AsyncClient()
@@ -68,22 +69,81 @@ class VerifyRequestMiddleware:
                 response_code=200,
                 created_at=datetime.utcnow(),
             )
-            current_status = None
             try:
                 # Get the request from scope
                 request = Request(scope)
-
-                # Check if request is valid from verify endpoint
-                res = await self.client.get(
-                    self.verify_url,
-                    params=add_max_delay_param(get_bandchain_params(request.headers), self.max_verification_delay),
+                params = add_max_delay_param(
+                    get_bandchain_params(request.headers), self.max_verification_delay
                 )
-                res.raise_for_status()
 
-                body = res.json()
+                # Verify against all URLs concurrently
+                results = await asyncio.gather(
+                    *[self._verify_url(url, params) for url in self.verify_urls],
+                    return_exceptions=True,
+                )
 
-                # Attempt to parse response from verify endpoint, if not possible, raise VerificationFailedError
-                is_delay, ds_id = self.parse_verify_response(body)
+                # Process results: separate successful responses from errors
+                valid_results: list[tuple[dict[str, Any], int]] = []
+                errors: list[str] = []
+
+                for i, result in enumerate(results):
+                    if isinstance(result, Exception):
+                        url = result.request.url
+                        # Reconstruct URL without query parameters to avoid leaking signatures
+                        port = f":{url.port}" if url.port is not None else ""
+                        sanitized_url = f"{url.scheme}://{url.host}{port}{url.path}"
+                        status_code = (
+                            result.response.status_code
+                            if result.response is not None
+                            else "unknown"
+                        )
+                        errors.append(
+                            f"{self.verify_urls[i]}: HTTPStatusError: "
+                            f"status_code={status_code}, url={sanitized_url}"
+                        )
+                    else:
+                        valid_results.append((result, i))
+
+                if not valid_results:
+                    raise VerificationFailedError(
+                        status_code=500,
+                        error="All verification requests failed",
+                        details=(
+                            "; ".join(errors)
+                            if errors
+                            else "Failed to verify request against all verify nodes"
+                        ),
+                    )
+
+                is_delay: bool | None = None
+                ds_id: int | None = None
+                errors = []
+
+                # Find result: prefer any with is_delay=false, otherwise use first one
+                for result, _ in valid_results:
+                    try:
+                        is_delay, ds_id = self.parse_verify_response(result)
+                    except VerificationFailedError as e:
+                        # If parsing fails, log the error but continue processing other results
+                        errors.append(
+                            f"Failed to parse response from verify endpoint: {result}, error: {e.details}"
+                        )
+                        continue
+                    # If any response indicates no delay, we can break early and use that result
+                    if not is_delay:
+                        break
+
+                # If we couldn't parse any successful response, treat it as a failure
+                if is_delay is None or ds_id is None:
+                    raise VerificationFailedError(
+                        status_code=500,
+                        error="Failed to parse any successful response from verify endpoints",
+                        details=(
+                            "; ".join(errors)
+                            if errors
+                            else "All verification responses were malformed or invalid"
+                        ),
+                    )
 
                 # Check if request is in allowed data source ids, if not, raise error and save report
                 self.check_request_validity(ds_id)
@@ -97,10 +157,6 @@ class VerifyRequestMiddleware:
                 report.response_code = e.status_code
                 report.error_type = e.error
                 report.error_msg = e.details
-            except HTTPStatusError as e:
-                report.response_code = e.response.status_code
-                report.error_type = e.response.reason_phrase
-                report.error_msg = e.response.text
             except Exception as e:
                 report.response_code = 500
                 report.error_type = "Internal Server Error"
@@ -108,9 +164,10 @@ class VerifyRequestMiddleware:
             finally:
                 # If response code is not 200, return error response
                 if report.response_code != 200:
-                    await JSONResponse(content={"error": report.error_type}, status_code=report.response_code)(
-                        scope, receive, send
-                    )
+                    await JSONResponse(
+                        content={"error": report.error_type},
+                        status_code=report.response_code,
+                    )(scope, receive, send)
 
                 # Save the report if report_db is provided
                 if self.report_db:
@@ -118,3 +175,9 @@ class VerifyRequestMiddleware:
         else:
             # Do nothing if the scope is not http.
             await self.app(scope, receive, send)
+
+    async def _verify_url(self, url: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Verify against a single URL and return the response body."""
+        res = await self.client.get(url, params=params, timeout=10)
+        res.raise_for_status()
+        return res.json()
